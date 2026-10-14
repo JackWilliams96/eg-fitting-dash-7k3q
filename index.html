@@ -92,6 +92,7 @@ input,select{width:100%;padding:8px 10px;border:1px solid var(--border);border-r
     <button data-page="sales">Sales log</button>
     <button data-page="compare">Compare</button>
     <button data-page="ytd">Year overview</button>
+    <button data-page="projection">Projection</button>
     <button data-page="history">History</button>
     <button data-page="settings">Settings</button>
   </nav>
@@ -144,6 +145,24 @@ input,select{width:100%;padding:8px 10px;border:1px solid var(--border);border-r
       <div class="panel"><h2>Cumulative net profit</h2><div class="chart"><canvas id="cYtdC"></canvas></div></div>
     </div>
     <div class="panel"><h2>Month by month</h2><div style="overflow:auto"><table><thead><tr><th>Month</th><th class="num">Net sales</th><th class="num">Profit</th><th class="num">Ad spend</th><th class="num">Net profit</th><th class="num">Bookings</th><th class="num">Conv.</th><th class="num">Bay util.</th><th>ROAS</th></tr></thead><tbody id="ytdRows"></tbody></table></div><p class="note" id="ytdHigh"></p></div>
+  </section>
+
+  <section class="page" id="page-projection">
+    <div class="panel"><h2>Projection scenario</h2>
+      <div class="form-grid">
+        <div><label>Based on</label><select id="prBasis"><option value="annual">Full year (YTD run-rate annualised)</option><option value="ytd">Year to date (actuals so far)</option></select></div>
+        <div><label>Ad spend change %</label><input type="number" id="prAd" value="20" step="1"></div>
+        <div><label>Bookings / bay utilisation change %</label><input type="number" id="prBk" value="20" step="1"></div>
+        <div><label>Revenue change %</label><input type="number" id="prRev" value="20" step="1"></div>
+      </div>
+      <p class="note" id="prNote"></p>
+    </div>
+    <div class="grid kpis" id="prKpis"></div>
+    <div class="grid two">
+      <div class="panel"><h2>Baseline vs projected</h2><div class="chart"><canvas id="cProj"></canvas></div></div>
+      <div class="panel"><h2>Net profit sensitivity <span class="note">revenue change × ad spend change</span></h2><div style="overflow:auto"><table id="prSens"></table></div><p class="note">Same average margin throughout. Shows projected net profit after ads.</p></div>
+    </div>
+    <div class="panel"><h2>Baseline vs projected</h2><div style="overflow:auto"><table><thead><tr><th>Metric</th><th class="num">Baseline</th><th class="num">Projected</th><th class="num">Change</th></tr></thead><tbody id="prRows"></tbody></table></div><p class="note" id="prWarn"></p></div>
   </section>
 
   <section class="page" id="page-history">
@@ -283,6 +302,7 @@ function render(){
   if(page==='dashboard')renderDashboard();
   else if(page==='sales')renderSales();
   else if(page==='history')renderHistory();
+  else if(page==='projection')renderProjection();
   else if(page==='compare')renderCompare();
   else if(page==='ytd')renderYtd();
   else renderSettings();
@@ -375,6 +395,36 @@ function renderYtd(){
     $('ytdHigh').textContent='Best month for sales: '+mLabel(bs.k)+' ('+fmt0(bs.x.net)+' net).'+(br?' Best ROAS: '+mLabel(br.k)+' ('+br.x.roas.toFixed(1)+'×).':'')}else $('ytdHigh').textContent='';
 }
 $('ytdYear').onchange=e=>{window._ytdYear=+e.target.value;renderYtd()};
+['prBasis','prAd','prBk','prRev'].forEach(id=>$(id).addEventListener('input',()=>{if(page==='projection')renderProjection()}));
+function projBase(){
+  const now=new Date(),Y=now.getFullYear(),ytd=rangeStats(Y+'-01-01',iso(now));
+  if($('prBasis').value==='ytd')return{b:ytd,label:'Year to date '+Y+' (actuals)',f:1};
+  const days=Math.round((now-new Date(Y,0,1))/864e5)+1,dim=(Y%4===0&&(Y%100!==0||Y%400===0))?366:365,f=dim/days;
+  const full=rangeStats(Y+'-01-01',Y+'-12-31');
+  const sc=v=>v*f;
+  const b={...ytd,total:sc(ytd.total),net:sc(ytd.net),cogs:sc(ytd.cogs),profit:sc(ytd.profit),spend:sc(ytd.spend),netProfit:sc(ytd.netProfit),bookings:Math.round(sc(ytd.bookings)),orders:Math.round(sc(ytd.orders)),cap:full.cap};
+  b.hours=b.bookings*settings.avgHours;b.util=b.cap?b.hours/b.cap*100:0;b.roas=b.spend?b.total/b.spend:0;b.conv=b.bookings?b.orders/b.bookings*100:0;b.cpb=b.bookings?b.spend/b.bookings:0;b.margin=b.net?b.profit/b.net*100:0;
+  return{b,label:'Full year '+Y+' (YTD run-rate × '+f.toFixed(2)+')',f};
+}
+function projScenario(b,ad,bk,rev){
+  const r=1+rev/100,a=1+ad/100,k=1+bk/100;
+  const p={total:b.total*r,net:b.net*r,cogs:b.cogs*r,profit:b.profit*r,spend:b.spend*a,bookings:Math.round(b.bookings*k),orders:Math.round(b.orders*k),cap:b.cap};
+  p.netProfit=p.profit-p.spend;p.hours=p.bookings*settings.avgHours;p.util=p.cap?p.hours/p.cap*100:0;p.roas=p.spend?p.total/p.spend:0;p.cpb=p.bookings?p.spend/p.bookings:0;p.conv=p.bookings?p.orders/p.bookings*100:0;p.margin=p.net?p.profit/p.net*100:0;
+  return p;
+}
+function renderProjection(){
+  const ad=parseFloat($('prAd').value)||0,bk=parseFloat($('prBk').value)||0,rev=parseFloat($('prRev').value)||0;
+  const {b,label}=projBase(),p=projScenario(b,ad,bk,rev);
+  $('prNote').textContent='Baseline: '+label+'. Margin held at '+pct(b.margin)+' net margin; cost of goods scales with revenue. Orders scale with bookings; bay capacity stays fixed.';
+  const dl=(x,y)=>x-y;
+  $('prKpis').innerHTML=[kpi('Projected net sales',fmt0(p.net),(p.net>=b.net?'+':'')+fmt0(p.net-b.net)+' vs baseline'),kpi('Projected profit after goods',fmt0(p.profit),pct(p.margin)+' margin (unchanged)'),kpi('Projected ad spend',fmt0(p.spend),(p.spend>=b.spend?'+':'')+fmt0(p.spend-b.spend)),kpi('Projected net profit after ads',fmt0(p.netProfit),(p.netProfit>=b.netProfit?'+':'')+fmt0(p.netProfit-b.netProfit)+' vs baseline',p.netProfit>=b.netProfit?'gold':'red'),kpi('Projected ROAS',p.spend?p.roas.toFixed(2)+'×':'—','baseline '+(b.spend?b.roas.toFixed(2)+'×':'—')),kpi('Projected bay utilisation',pct(p.util),'baseline '+pct(b.util)+' · '+p.hours.toFixed(0)+' of '+p.cap+' hrs','gold')].join('');
+  const rows=[['Sales (inc VAT)',b.total,p.total,fmt0],['Net sales (ex VAT)',b.net,p.net,fmt0],['Profit after goods',b.profit,p.profit,fmt0],['Ad spend',b.spend,p.spend,fmt0],['Net profit after ads',b.netProfit,p.netProfit,fmt0],['ROAS',b.roas,p.roas,v=>v.toFixed(2)+'×'],['Bookings',b.bookings,p.bookings,v=>Math.round(v)],['Orders',b.orders,p.orders,v=>Math.round(v)],['Bay hours used',b.hours,p.hours,v=>v.toFixed(0)],['Bay utilisation',b.util,p.util,pct],['Cost per booking',b.cpb,p.cpb,fmt2]];
+  $('prRows').innerHTML=rows.map(([l,x,y,f])=>{const d=y-x,pc=x?d/Math.abs(x)*100:0;return `<tr><td><b>${l}</b></td><td class="num">${f(x)}</td><td class="num">${f(y)}</td><td class="num">${d>=0?'+':''}${x?pc.toFixed(1)+'%':'—'}</td></tr>`}).join('');
+  $('prWarn').textContent=p.util>100?'Warning: projected bookings need more than 100% of bay capacity ('+p.util.toFixed(0)+'%). You would need more opening hours or a second bay to deliver this.':(p.util>=85?'Note: projected utilisation is above 85%, so the bay would be close to full.':'');
+  mk('cProj',{type:'bar',data:{labels:['Net sales','Profit after goods','Ad spend','Net profit after ads'],datasets:[{label:'Baseline',data:[b.net,b.profit,b.spend,b.netProfit],backgroundColor:'#b8862e',borderRadius:3},{label:'Projected',data:[p.net,p.profit,p.spend,p.netProfit],backgroundColor:'#0b6b3a',borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:legendBottom}});
+  const revs=[0,10,20,30],ads=[0,10,20,30];
+  $('prSens').innerHTML='<thead><tr><th>Revenue ↓ / Ad spend →</th>'+ads.map(a=>`<th class="num">+${a}%</th>`).join('')+'</tr></thead><tbody>'+revs.map(r=>`<tr><td><b>+${r}%</b></td>`+ads.map(a=>{const s=projScenario(b,a,bk,r);const hl=(r===rev&&a===ad)?'background:var(--gold-light);font-weight:700':'';return `<td class="num" style="${hl}">${fmt0(s.netProfit)}</td>`}).join('')+'</tr>').join('')+'</tbody>';
+}
 const DL=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 function renderSettings(){
   $('setVat').value=settings.vat;$('setAvg').value=settings.avgHours;$('setHours').value=settings.hoursPerDay;
