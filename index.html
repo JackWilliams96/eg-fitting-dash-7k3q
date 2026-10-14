@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Evolution Golf — Custom Fitting Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js" integrity="sha384-iU8HYtnGQ8Cy4zl7gbNMOhsDTTKX02BTXptVP/vqAWIaTfM7isw76iyZCsjL2eVi" crossorigin="anonymous"></script>
+<style>
+:root{color-scheme:light;--green:#0b6b3a;--green-dark:#084d29;--green-light:#e7f4ec;--gold:#b8862e;--gold-light:#f7ecd6;--ink:#1c2321;--ink-soft:#5a6560;--border:#dfe6e1;--bg:#f4f7f5;--card:#fff;--red:#b3413b;--red-light:#f6e9e8}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink);font-size:14px}
+.top{background:linear-gradient(135deg,var(--green-dark),var(--green));color:#fff;padding:18px 24px 0}
+.top-row{max-width:1180px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.top h1{margin:0;font-size:20px}.top p{margin:2px 0 0;font-size:12px;opacity:.8}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.btn{background:var(--gold);color:#fff;border:0;border-radius:8px;padding:9px 14px;font-weight:600;font-size:13px;cursor:pointer;font-family:inherit}
+.btn:hover{filter:brightness(1.07)}
+.btn.ghost{background:rgba(255,255,255,.15);color:#fff}
+.btn.secondary{background:#fff;color:var(--green-dark);border:1px solid var(--border)}
+.btn.small{padding:5px 10px;font-size:12px}
+nav{max-width:1180px;margin:14px auto 0;display:flex;gap:4px}
+nav button{background:transparent;border:0;color:rgba(255,255,255,.75);padding:10px 18px;font-size:14px;font-weight:600;cursor:pointer;border-radius:8px 8px 0 0;font-family:inherit}
+nav button.active{background:var(--bg);color:var(--green-dark)}
+.monthbar{max-width:1180px;margin:18px auto 0;padding:0 24px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.monthbar .label{font-size:22px;font-weight:700;color:var(--green-dark);min-width:190px;text-align:center}
+.monthbar .arrow{background:#fff;border:1px solid var(--border);border-radius:8px;width:34px;height:34px;cursor:pointer;font-size:16px;color:var(--green-dark)}
+.wrap{max-width:1180px;margin:0 auto;padding:16px 24px 48px}
+.page{display:none}.page.active{display:block}
+.grid{display:grid;gap:12px}
+.kpis{grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin-bottom:16px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;border-left:4px solid var(--green)}
+.card.gold{border-left-color:var(--gold);background:var(--gold-light)}.card.red{border-left-color:var(--red);background:var(--red-light)}
+.card .l{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-soft)}
+.card .v{font-size:22px;font-weight:700;margin-top:4px}.card .s{font-size:11px;color:var(--ink-soft);margin-top:2px}
+.panel{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px}
+.panel h2{margin:0 0 12px;font-size:15px;color:var(--green-dark);display:flex;justify-content:space-between;align-items:center;gap:8px}
+.two{grid-template-columns:repeat(auto-fit,minmax(340px,1fr))}
+.chart{position:relative;height:250px}
+.hero{display:flex;gap:16px;align-items:center;flex-wrap:wrap;background:#fff;border:1px solid var(--border);border-radius:12px;padding:16px 20px;margin-bottom:14px}
+.hero .big{font-size:38px;font-weight:800;color:var(--green-dark)}
+.rating{display:inline-flex;align-items:center;gap:8px;font-weight:700;font-size:13px}
+.rating .shape{min-width:46px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;color:#fff;border-radius:4px;padding:0 6px}
+.rating.bogey .shape{background:var(--red);border-radius:0}
+.rating.par .shape{background:var(--gold);border-radius:15px}
+.rating.abovepar .shape{background:var(--green);border-radius:15px}
+.rating.birdie .shape{background:var(--green-dark);border-radius:15px;box-shadow:0 0 0 3px #fff,0 0 0 5px var(--green-dark)}
+.rating.none .shape{background:#9aa5a0}
+.callout{background:var(--gold-light);border:1px solid #e6cf9f;border-radius:10px;padding:12px 16px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);padding:8px;border-bottom:2px solid var(--border);background:var(--green-light)}
+td{padding:8px;border-bottom:1px solid var(--border)}
+tr.click{cursor:pointer}tr.click:hover{background:var(--green-light)}
+.num{text-align:right}
+.bar{background:#e9eeeb;border-radius:10px;height:14px;overflow:hidden}.bar>i{display:block;height:100%;background:var(--green)}
+.day{border:1px solid var(--border);border-radius:10px;margin-bottom:8px;overflow:hidden;background:#fff}
+.day-h{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;cursor:pointer;background:#fafcfb;gap:10px;flex-wrap:wrap}
+.day-h .st{display:flex;gap:16px;font-size:12px;color:var(--ink-soft)}
+.day-d{display:none;padding:8px 14px}.day.open .day-d{display:block}
+.sale{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);gap:10px;flex-wrap:wrap}
+.sale:last-child{border:0}.sale .st{display:flex;gap:18px;font-size:12px}
+.icon{background:none;border:1px solid var(--border);border-radius:6px;cursor:pointer;padding:3px 8px;color:var(--ink-soft)}.icon:hover{color:var(--red);border-color:var(--red)}
+.empty{text-align:center;color:var(--ink-soft);padding:24px}
+label{display:block;font-size:12px;color:var(--ink-soft);margin-bottom:4px}
+input,select{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-start;justify-content:center;padding:40px 16px;overflow:auto;z-index:50}
+.modal{background:#fff;border-radius:14px;width:100%;max-width:640px;padding:22px}
+.modal h3{margin:0 0 4px;color:var(--green-dark)}.modal .sub{font-size:12px;color:var(--ink-soft);margin-bottom:14px}
+.modal .x{float:right;background:none;border:0;font-size:22px;cursor:pointer;color:var(--ink-soft)}
+.srow{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px;align-items:end;margin-bottom:10px}
+@media(max-width:560px){.srow{grid-template-columns:1fr 1fr}}
+.foot{display:flex;gap:8px;margin-top:16px}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--green-dark);color:#fff;padding:10px 18px;border-radius:10px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .25s;z-index:99}
+.toast.show{opacity:1}
+.ro .actions .btn:not(#pdfBtn),.ro #addSaleBtn2,.ro .icon,.ro #nav [data-page=settings]{display:none!important}
+.note{font-size:12px;color:var(--ink-soft)}
+.days{display:flex;gap:10px;flex-wrap:wrap}.days label{display:flex;gap:4px;align-items:center;font-size:13px;color:var(--ink);margin:0}.days input{width:auto}
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="top-row">
+    <div><h1>Evolution Golf — Custom Fitting Dashboard</h1><p>Sales, ad spend, bookings and bay utilisation by month</p></div>
+    <div class="actions">
+      <button class="btn" id="addSaleBtn">+ Add sale</button>
+      <button class="btn" id="monthEndBtn">Month-end inputs</button>
+      <button class="btn ghost" id="pdfBtn">Export month PDF</button>
+    </div>
+  </div>
+  <nav id="nav">
+    <button data-page="dashboard" class="active">Dashboard</button>
+    <button data-page="sales">Sales log</button>
+    <button data-page="history">History</button>
+    <button data-page="settings">Settings</button>
+  </nav>
+</div>
+
+<div class="monthbar" id="monthbar">
+  <button class="arrow" id="prevM">&#9664;</button>
+  <div class="label" id="monthLabel"></div>
+  <button class="arrow" id="nextM">&#9654;</button>
+  <button class="btn secondary small" id="thisM">This month</button>
+  <button class="btn secondary small" id="lastM">Last month</button>
+</div>
+
+<div class="wrap">
+  <section class="page active" id="page-dashboard">
+    <div id="missingCallout"></div>
+    <div class="hero" id="hero"></div>
+    <div class="grid kpis" id="kpis"></div>
+    <div class="grid two">
+      <div class="panel"><h2>Daily net sales</h2><div class="chart"><canvas id="cDaily"></canvas></div></div>
+      <div class="panel"><h2>Where the money went</h2><div class="chart"><canvas id="cSplit"></canvas></div></div>
+      <div class="panel"><h2>Bay utilisation</h2><div class="chart"><canvas id="cBay"></canvas></div><p class="note" id="bayNote"></p></div>
+      <div class="panel"><h2>Last 6 months</h2><div class="chart"><canvas id="cTrend"></canvas></div></div>
+    </div>
+  </section>
+
+  <section class="page" id="page-sales">
+    <div class="grid kpis" id="salesKpis"></div>
+    <div class="panel"><h2>Sales this month <button class="btn small" id="addSaleBtn2">+ Add sale</button></h2><div id="salesList"></div></div>
+  </section>
+
+  <section class="page" id="page-history">
+    <div class="panel"><h2>Month by month</h2><div class="chart"><canvas id="cHist"></canvas></div></div>
+    <div class="panel"><h2>All months <span class="note">click a row to open it</span></h2><div style="overflow:auto"><table><thead><tr><th>Month</th><th class="num">Net sales</th><th class="num">Profit</th><th class="num">Ad spend</th><th class="num">Net profit</th><th class="num">Bookings</th><th class="num">Bay util.</th><th>ROAS</th></tr></thead><tbody id="histRows"></tbody></table></div><div class="empty" id="histEmpty" style="display:none">No data yet.</div></div>
+  </section>
+
+  <section class="page" id="page-settings">
+    <div class="panel"><h2>Settings</h2>
+      <div class="form-grid">
+        <div><label>VAT rate % (sales are entered inc VAT, cost of goods ex VAT)</label><input type="number" id="setVat" min="0" step="0.1"></div>
+        <div><label>Average booking length (hours)</label><input type="number" id="setAvg" min="0" step="0.25"></div>
+        <div><label>Fitting hours per open day</label><input type="number" id="setHours" min="0" step="0.5"></div>
+      </div>
+      <p style="margin:14px 0 6px" class="note">Open days</p><div class="days" id="setDays"></div>
+      <p class="note" id="capNote"></p>
+    </div>
+    <div class="panel"><h2>Data</h2>
+      <p class="note">Bay hours = bookings × average booking length. Utilisation = bay hours ÷ (open days in month × hours per day).</p>
+      <button class="btn secondary" id="csvBtn">Download sales CSV</button>
+      <h2 style="margin-top:18px">Publish to the live dashboard</h2>
+      <p class="note">Click to copy your current data as JSON, then paste it into the chat so it can be published.</p>
+      <button class="btn secondary" id="copyDataBtn">Copy data for publishing</button>
+      <textarea id="dataOut" readonly style="display:none;width:100%;height:120px;margin-top:10px;font-family:monospace;font-size:11px"></textarea>
+    </div>
+  </section>
+</div>
+
+<div class="overlay" id="saleOv"><div class="modal">
+  <button class="x" data-close="saleOv">&times;</button>
+  <h3 id="saleTitle">Add sale(s)</h3><div class="sub">Total includes VAT. Cost of goods is ex VAT.</div>
+  <div id="saleRows"></div>
+  <button class="btn secondary small" id="addRowBtn" type="button">+ Another sale</button>
+  <div class="foot"><button class="btn" id="saleSave" type="button">Save</button><button class="btn secondary" data-close="saleOv" type="button">Cancel</button></div>
+</div></div>
+
+<div class="overlay" id="monthOv"><div class="modal">
+  <button class="x" data-close="monthOv">&times;</button>
+  <h3>Month-end inputs</h3><div class="sub">Enter once the month is done. Sales come from your sales log automatically.</div>
+  <div class="form-grid">
+    <div><label>Month</label><input type="month" id="miMonth"></div>
+    <div><label>Ad spend (Meta) £</label><input type="number" id="miSpend" min="0" step="0.01" placeholder="0.00"></div>
+    <div><label>Bookings (Acuity)</label><input type="number" id="miBookings" min="0" step="1" placeholder="0"></div>
+    <div><label>Orders (bookings that purchased)</label><input type="number" id="miOrders" min="0" step="1" placeholder="0"></div>
+  </div>
+  <p class="note" id="miPreview"></p>
+  <div class="foot"><button class="btn" id="miSave" type="button">Save month</button><button class="btn secondary" data-close="monthOv" type="button">Cancel</button></div>
+</div></div>
+<div class="overlay" id="pdfOv"><div class="modal">
+  <button class="x" data-close="pdfOv">&times;</button>
+  <h3>Export PDF report</h3><div class="sub">Choose the period to report on.</div>
+  <div class="form-grid">
+    <div><label>Period</label><select id="pdfPeriod"><option value="month">Selected month</option><option value="mtd">Month to date</option><option value="ytd">Year to date</option><option value="custom">Custom range</option></select></div>
+    <div id="pdfFromWrap" style="display:none"><label>From</label><input type="date" id="pdfFrom"></div>
+    <div id="pdfToWrap" style="display:none"><label>To</label><input type="date" id="pdfTo"></div>
+  </div>
+  <p class="note" id="pdfInfo"></p>
+  <p class="note">Sales are counted by date. Ad spend, bookings and orders are monthly inputs, pro-rated by days when the period covers part of a month.</p>
+  <div class="foot"><button class="btn" id="pdfGo" type="button">Download PDF</button><button class="btn secondary" data-close="pdfOv" type="button">Cancel</button></div>
+</div></div>
+<div class="toast" id="toast"></div>
+<script>
+// ===== storage =====
+function loadLS(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}}
+function saveLS(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+const LS_SALES='ef_custom_fitting_sales', LS_MONTHS='ef_month_inputs_v1', LS_SET='ef_settings_v2';
+let sales=loadLS(LS_SALES,[]);
+let months=loadLS(LS_MONTHS,null);
+if(months===null){ // migrate old weekly/monthly entries into month inputs
+  months={};
+  loadLS('ef_custom_fitting_entries_v2',[]).forEach(e=>{if(!e.date)return;const k=e.date.slice(0,7);const m=months[k]||(months[k]={spend:0,bookings:0,orders:0});m.spend+=+e.spend||0;m.bookings+=+e.bookings||0;m.orders+=+e.orders||0});
+  saveLS(LS_MONTHS,months);
+}
+const legacyVat=loadLS('ef_vat_rate',20);
+let settings=Object.assign({vat:typeof legacyVat==='number'?legacyVat:20,avgHours:2,hoursPerDay:loadLS('ef_bay_hours_per_day',8),openDays:loadLS('ef_bay_open_days',[false,true,true,true,true,true,false])},loadLS(LS_SET,{}));
+function saveSettings(){saveLS(LS_SET,settings)}
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+
+// ===== formatters =====
+const fmt0=n=>'£'+Math.round(n).toLocaleString('en-GB');
+const fmt2=n=>(n<0?'-':'')+'£'+Math.abs(n).toLocaleString('en-GB',{minimumFractionDigits:2,maximumFractionDigits:2});
+const pct=n=>(isFinite(n)?n:0).toFixed(1)+'%';
+function mLabel(k){const[y,m]=k.split('-');return new Date(y,m-1,1).toLocaleDateString('en-GB',{month:'long',year:'numeric'})}
+function dNice(s){const[y,m,d]=s.split('-');return new Date(y,m-1,d).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'})}
+function curKey(d){d=d||new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')}
+function shiftKey(k,n){const[y,m]=k.split('-').map(Number);return curKey(new Date(y,m-1+n,1))}
+function showToast(t){const el=document.getElementById('toast');el.textContent=t;el.classList.add('show');clearTimeout(showToast._t);showToast._t=setTimeout(()=>el.classList.remove('show'),3200)}
+const $=id=>document.getElementById(id);
+
+// ===== calculations =====
+function getRating(roas,has){if(!has)return{label:'No spend',cls:'none'};if(roas<7)return{label:'Bogey',cls:'bogey'};if(roas<10)return{label:'Par',cls:'par'};if(roas<12)return{label:'Above Par',cls:'abovepar'};return{label:'Birdie',cls:'birdie'}}
+function ratingBadge(roas,has){const r=getRating(roas,has);return `<span class="rating ${r.cls}"><span class="shape">${has?roas.toFixed(1)+'×':'—'}</span>${r.label}</span>`}
+function withSale(s){const net=s.total/(1+settings.vat/100);const profit=net-s.cogs;return{...s,net,profit,margin:net?profit/net*100:0}}
+function capacityFor(k){const[y,m]=k.split('-').map(Number);const n=new Date(y,m,0).getDate();let c=0;for(let d=1;d<=n;d++)if(settings.openDays[new Date(y,m-1,d).getDay()])c++;return c*settings.hoursPerDay}
+function monthStats(k){
+  const ss=sales.filter(s=>s.date&&s.date.startsWith(k)).map(withSale);
+  const inp=months[k]||{};
+  const total=ss.reduce((a,s)=>a+s.total,0),net=ss.reduce((a,s)=>a+s.net,0),cogs=ss.reduce((a,s)=>a+s.cogs,0);
+  const profit=net-cogs,spend=+inp.spend||0,bookings=+inp.bookings||0,orders=+inp.orders||0;
+  const hours=bookings*settings.avgHours,cap=capacityFor(k);
+  return{key:k,sales:ss,count:ss.length,total,net,cogs,profit,margin:net?profit/net*100:0,spend,bookings,orders,hasInputs:!!months[k],
+    netProfit:profit-spend,roas:spend?total/spend:0,conv:bookings?orders/bookings*100:0,cpb:bookings?spend/bookings:0,hours,cap,util:cap?hours/cap*100:0}
+}
+const pad=n=>String(n).padStart(2,'0');
+const iso=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+function rangeStats(from,to){
+  const ss=sales.filter(s=>s.date&&s.date>=from&&s.date<=to).map(withSale);
+  const total=ss.reduce((a,s)=>a+s.total,0),net=ss.reduce((a,s)=>a+s.net,0),cogs=ss.reduce((a,s)=>a+s.cogs,0),profit=net-cogs;
+  let spend=0,bookings=0,orders=0,cap=0,hasInputs=false;
+  const f=new Date(from+'T00:00:00'),t=new Date(to+'T00:00:00');
+  for(let d=new Date(f.getFullYear(),f.getMonth(),1);d<=t;d=new Date(d.getFullYear(),d.getMonth()+1,1)){
+    const k=curKey(d),dim=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();
+    const a=d<f?f:d,e=new Date(d.getFullYear(),d.getMonth(),dim),b=e>t?t:e;
+    const days=Math.round((b-a)/864e5)+1,frac=days/dim;
+    const inp=months[k];if(inp){hasInputs=true;spend+=(+inp.spend||0)*frac;bookings+=(+inp.bookings||0)*frac;orders+=(+inp.orders||0)*frac}
+    for(let x=new Date(a);x<=b;x.setDate(x.getDate()+1))if(settings.openDays[x.getDay()])cap+=settings.hoursPerDay;
+  }
+  bookings=Math.round(bookings);orders=Math.round(orders);const hours=bookings*settings.avgHours;
+  return{sales:ss,count:ss.length,total,net,cogs,profit,margin:net?profit/net*100:0,spend,bookings,orders,hasInputs,netProfit:profit-spend,roas:spend?total/spend:0,conv:bookings?orders/bookings*100:0,cpb:bookings?spend/bookings:0,hours,cap,util:cap?hours/cap*100:0}
+}
+function allMonthKeys(){const s=new Set(Object.keys(months));sales.forEach(x=>x.date&&s.add(x.date.slice(0,7)));return [...s].sort()}
+
+// ===== state / nav =====
+let selMonth=curKey(),page='dashboard',charts={};
+function showPage(p){page=p;document.querySelectorAll('.page').forEach(e=>e.classList.toggle('active',e.id==='page-'+p));document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===p));$('monthbar').style.display=(p==='history'||p==='settings')?'none':'flex';render()}
+document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>showPage(b.dataset.page));
+$('prevM').onclick=()=>{selMonth=shiftKey(selMonth,-1);render()};
+$('nextM').onclick=()=>{selMonth=shiftKey(selMonth,1);render()};
+$('thisM').onclick=()=>{selMonth=curKey();render()};
+$('lastM').onclick=()=>{selMonth=shiftKey(curKey(),-1);render()};
+
+function mk(id,cfg){if(charts[id])charts[id].destroy();charts[id]=new Chart($(id).getContext('2d'),cfg)}
+const legendBottom={legend:{position:'bottom',labels:{boxWidth:12,font:{size:11}}}};
+
+function render(){
+  $('monthLabel').textContent=mLabel(selMonth);
+  if(page==='dashboard')renderDashboard();
+  else if(page==='sales')renderSales();
+  else if(page==='history')renderHistory();
+  else renderSettings();
+}
+
+function kpi(l,v,s,cls){return `<div class="card ${cls||''}"><div class="l">${l}</div><div class="v">${v}</div><div class="s">${s||''}</div></div>`}
+
+function renderDashboard(){
+  const m=monthStats(selMonth);
+  $('missingCallout').innerHTML=m.hasInputs?'':`<div class="callout"><div><b>${mLabel(selMonth)} month-end inputs are missing.</b> Add ad spend, bookings and orders to see ROAS, conversion and bay utilisation.</div><button class="btn small" onclick="openMonthModal()">Add them</button></div>`;
+  $('hero').innerHTML=`<div><div class="note">Return on ad spend</div><div class="big">${m.spend?m.roas.toFixed(2)+'×':'—'}</div></div><div>${ratingBadge(m.roas,!!m.spend)}<div class="note" style="margin-top:6px">Target 10× · Bogey &lt;7 · Par 7–10 · Above Par 10–12 · Birdie 12+</div></div><div style="flex:1"></div><div class="note" style="text-align:right">${m.count} sale${m.count===1?'':'s'} logged<br>${m.bookings} bookings · ${m.orders} orders</div>`;
+  $('kpis').innerHTML=[
+    kpi('Sales (inc VAT)',fmt0(m.total),m.count+' sales logged'),
+    kpi('Net sales (ex VAT)',fmt0(m.net),'at '+settings.vat+'% VAT'),
+    kpi('Profit after goods',fmt0(m.profit),pct(m.margin)+' net margin'),
+    kpi('Ad spend',fmt0(m.spend),'Meta'),
+    kpi('Net profit after ads',fmt0(m.netProfit),'profit − ad spend',m.netProfit>=0?'gold':'red'),
+    kpi('Bookings',m.bookings,'cost per booking '+fmt2(m.cpb)),
+    kpi('Conversion',pct(m.conv),m.orders+' orders'),
+    kpi('Bay utilisation',pct(m.util),m.hours.toFixed(0)+' of '+m.cap+' hrs','gold')
+  ].join('');
+  // daily
+  const [y,mo]=selMonth.split('-').map(Number),n=new Date(y,mo,0).getDate();
+  const byDay=Array(n).fill(0);m.sales.forEach(s=>{byDay[+s.date.slice(8,10)-1]+=s.net});
+  mk('cDaily',{type:'bar',data:{labels:byDay.map((_,i)=>i+1),datasets:[{label:'Net sales (£)',data:byDay,backgroundColor:'#0b6b3a',borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}});
+  mk('cSplit',{type:'doughnut',data:{labels:['Cost of goods','Ad spend','Net profit'],datasets:[{data:[m.cogs,m.spend,Math.max(0,m.netProfit)],backgroundColor:['#b3413b','#b8862e','#0b6b3a']}]},options:{responsive:true,maintainAspectRatio:false,plugins:legendBottom}});
+  mk('cBay',{type:'doughnut',data:{labels:['Hours booked','Free capacity'],datasets:[{data:[m.hours,Math.max(0,m.cap-m.hours)],backgroundColor:['#0b6b3a','#dfe6e1']}]},options:{responsive:true,maintainAspectRatio:false,plugins:legendBottom}});
+  $('bayNote').textContent=m.bookings?`${m.bookings} bookings × ${settings.avgHours} hrs = ${m.hours.toFixed(0)} hrs used of ${m.cap} hrs capacity (${pct(m.util)}).`+(m.util<60?' Plenty of room — extra ad spend can convert into more bookings.':m.util>=85?' Nearly full — more ad spend may not convert without more capacity.':' Healthy headroom.'):'Add bookings in month-end inputs to see utilisation.';
+  const keys=[];for(let i=5;i>=0;i--)keys.push(shiftKey(selMonth,-i));
+  const ms=keys.map(monthStats);
+  mk('cTrend',{data:{labels:keys.map(k=>mLabel(k).slice(0,3)+' '+k.slice(2,4)),datasets:[{type:'bar',label:'Net sales',data:ms.map(x=>x.net),backgroundColor:'#0b6b3a',borderRadius:3,yAxisID:'y'},{type:'bar',label:'Ad spend',data:ms.map(x=>x.spend),backgroundColor:'#b3413b',borderRadius:3,yAxisID:'y'},{type:'line',label:'ROAS ×',data:ms.map(x=>x.roas),borderColor:'#b8862e',backgroundColor:'#b8862e',tension:.3,yAxisID:'y1'}]},options:{responsive:true,maintainAspectRatio:false,plugins:legendBottom,scales:{y:{beginAtZero:true},y1:{position:'right',beginAtZero:true,grid:{drawOnChartArea:false}}}}});
+}
+
+function renderSales(){
+  const m=monthStats(selMonth);
+  $('salesKpis').innerHTML=[kpi('Sales logged',m.count),kpi('Total (inc VAT)',fmt2(m.total)),kpi('Net sales',fmt2(m.net)),kpi('Cost of goods',fmt2(m.cogs)),kpi('Profit',fmt2(m.profit),'',m.profit>=0?'gold':'red'),kpi('Net margin',pct(m.margin))].join('');
+  if(!m.count){$('salesList').innerHTML='<div class="empty">No sales logged for '+mLabel(selMonth)+'.</div>';return}
+  const g={};m.sales.forEach(s=>(g[s.date]=g[s.date]||[]).push(s));
+  $('salesList').innerHTML=Object.keys(g).sort().reverse().map(d=>{
+    const it=g[d],t=it.reduce((a,s)=>a+s.total,0),n=it.reduce((a,s)=>a+s.net,0),p=it.reduce((a,s)=>a+s.profit,0);
+    return `<div class="day" id="day-${d}"><div class="day-h" onclick="document.getElementById('day-${d}').classList.toggle('open')"><div><b>${dNice(d)}</b> · ${it.length} sale${it.length===1?'':'s'}</div><div class="st"><span>Total <b>${fmt2(t)}</b></span><span>Profit <b>${fmt2(p)}</b></span><span>Margin <b>${pct(n?p/n*100:0)}</b></span></div></div><div class="day-d">${it.map(s=>`<div class="sale"><div class="st"><span>Total ${fmt2(s.total)}</span><span>Net ${fmt2(s.net)}</span><span>Goods ${fmt2(s.cogs)}</span><span>Profit ${fmt2(s.profit)}</span><span>${pct(s.margin)}</span></div><div><button class="icon" onclick="editSale('${s.id}')">Edit</button> <button class="icon" onclick="delSale('${s.id}')">Delete</button></div></div>`).join('')}</div></div>`}).join('');
+}
+function delSale(id){if(!confirm('Delete this sale?'))return;sales=sales.filter(s=>s.id!==id);saveLS(LS_SALES,sales);render()}
+
+function renderHistory(){
+  const keys=allMonthKeys(),ms=keys.map(monthStats);
+  $('histEmpty').style.display=ms.length?'none':'block';
+  $('histRows').innerHTML=[...ms].reverse().map(m=>`<tr class="click" onclick="selMonth='${m.key}';showPage('dashboard')"><td><b>${mLabel(m.key)}</b></td><td class="num">${fmt0(m.net)}</td><td class="num">${fmt0(m.profit)}</td><td class="num">${fmt0(m.spend)}</td><td class="num">${fmt0(m.netProfit)}</td><td class="num">${m.bookings}</td><td class="num">${m.hasInputs?pct(m.util):'—'}</td><td>${ratingBadge(m.roas,!!m.spend)}</td></tr>`).join('');
+  mk('cHist',{data:{labels:keys.map(mLabel),datasets:[{type:'bar',label:'Net sales',data:ms.map(x=>x.net),backgroundColor:'#0b6b3a',borderRadius:3},{type:'bar',label:'Ad spend',data:ms.map(x=>x.spend),backgroundColor:'#b3413b',borderRadius:3},{type:'line',label:'Net profit',data:ms.map(x=>x.netProfit),borderColor:'#b8862e',backgroundColor:'#b8862e',tension:.3}]},options:{responsive:true,maintainAspectRatio:false,plugins:legendBottom}});
+}
+
+const DL=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+function renderSettings(){
+  $('setVat').value=settings.vat;$('setAvg').value=settings.avgHours;$('setHours').value=settings.hoursPerDay;
+  $('setDays').innerHTML=DL.map((l,i)=>`<label><input type="checkbox" ${settings.openDays[i]?'checked':''} onchange="settings.openDays[${i}]=this.checked;saveSettings();renderSettings()">${l}</label>`).join('');
+  $('capNote').textContent='Weekly capacity: '+(settings.openDays.filter(Boolean).length*settings.hoursPerDay)+' hrs';
+}
+$('setVat').onchange=e=>{settings.vat=parseFloat(e.target.value)||0;saveSettings();showToast('VAT updated')};
+$('setAvg').onchange=e=>{settings.avgHours=parseFloat(e.target.value)||0;saveSettings();showToast('Average booking length updated')};
+$('setHours').onchange=e=>{settings.hoursPerDay=parseFloat(e.target.value)||0;saveSettings();renderSettings()};
+$('csvBtn').onclick=()=>{let c='Date,Total inc VAT,VAT %,Net sales,Cost of goods,Profit,Net margin %\n';sales.map(withSale).sort((a,b)=>a.date.localeCompare(b.date)).forEach(s=>c+=`${s.date},${s.total},${settings.vat},${s.net.toFixed(2)},${s.cogs},${s.profit.toFixed(2)},${s.margin.toFixed(1)}\n`);dl(new Blob([c],{type:'text/csv'}),'sales-log.csv')};
+function dl(blob,name){const u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(u)}
+
+// ===== modals =====
+document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>$(b.dataset.close).style.display='none');
+document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('mousedown',e=>{if(e.target===o)o.style.display='none'}));
+document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.overlay').forEach(o=>o.style.display='none')});
+
+let editSaleId=null;
+function addRow(p){p=p||{};const w=document.createElement('div');w.className='srow';
+  w.innerHTML=`<div><label>Date</label><input type="date" class="r-date" value="${p.date||''}"></div><div><label>Total £ (inc VAT)</label><input type="number" class="r-total" min="0" step="0.01" value="${p.total||''}" placeholder="0.00"></div><div><label>Cost of goods £ (ex VAT)</label><input type="number" class="r-cogs" min="0" step="0.01" value="${p.cogs||''}" placeholder="0.00"></div><button class="icon r-del" type="button">✕</button>`;
+  w.querySelector('.r-del').onclick=()=>w.remove();$('saleRows').appendChild(w)}
+$('addRowBtn').onclick=()=>addRow({date:todayStr()});
+function todayStr(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function openSaleModal(){editSaleId=null;$('saleTitle').textContent='Add sale(s)';$('addRowBtn').style.display='inline-block';$('saleRows').innerHTML='';addRow({date:todayStr()});$('saleOv').style.display='flex'}
+function editSale(id){const s=sales.find(x=>x.id===id);if(!s)return;editSaleId=id;$('saleTitle').textContent='Edit sale';$('addRowBtn').style.display='none';$('saleRows').innerHTML='';addRow(s);$('saleOv').style.display='flex'}
+$('addSaleBtn').onclick=openSaleModal;$('addSaleBtn2').onclick=openSaleModal;
+$('saleSave').onclick=()=>{
+  const rows=[...document.querySelectorAll('#saleRows .srow')].map(r=>({date:r.querySelector('.r-date').value,total:parseFloat(r.querySelector('.r-total').value)||0,cogs:parseFloat(r.querySelector('.r-cogs').value)||0}));
+  const good=rows.filter(r=>r.date&&r.total>0);
+  if(!good.length){showToast('Enter a date and a total above 0');return}
+  if(editSaleId){const i=sales.findIndex(x=>x.id===editSaleId);if(i>-1)sales[i]={...sales[i],...good[0]};showToast('Sale updated')}
+  else{good.forEach(r=>sales.push({id:uid(),...r}));showToast('Added '+good.length+' sale'+(good.length===1?'':'s')+' to '+mLabel(good[0].date.slice(0,7)))}
+  saveLS(LS_SALES,sales);selMonth=good[0].date.slice(0,7);$('saleOv').style.display='none';render();
+};
+
+function miPreview(){const b=parseFloat($('miBookings').value)||0;$('miPreview').textContent=b?`${b} bookings × ${settings.avgHours} hrs = ${(b*settings.avgHours).toFixed(0)} bay hours, ${pct(capacityFor($('miMonth').value||selMonth)?b*settings.avgHours/capacityFor($('miMonth').value||selMonth)*100:0)} of capacity.`:''}
+['miBookings','miMonth'].forEach(id=>$(id).addEventListener('input',miPreview));
+function openMonthModal(){const k=selMonth,i=months[k]||{};$('miMonth').value=k;$('miSpend').value=i.spend||'';$('miBookings').value=i.bookings||'';$('miOrders').value=i.orders||'';miPreview();$('monthOv').style.display='flex'}
+$('monthEndBtn').onclick=openMonthModal;
+$('miMonth').addEventListener('change',()=>{const i=months[$('miMonth').value]||{};$('miSpend').value=i.spend||'';$('miBookings').value=i.bookings||'';$('miOrders').value=i.orders||'';miPreview()});
+$('miSave').onclick=()=>{const k=$('miMonth').value;if(!k){showToast('Pick a month');return}
+  months[k]={spend:parseFloat($('miSpend').value)||0,bookings:parseFloat($('miBookings').value)||0,orders:parseFloat($('miOrders').value)||0};
+  saveLS(LS_MONTHS,months);selMonth=k;$('monthOv').style.display='none';showToast('Saved '+mLabel(k));render()};
+// Minimal, dependency-free PDF writer. Pure JS, no Node/Browser-specific APIs
+// except where noted. Builds a PDF as a "binary string" (one JS char = one byte,
+// codes 0-255) which callers convert to a Blob (browser) or Buffer (Node/testing).
+//
+// Coordinate convention for the public API: y=0 is the TOP of the page (like
+// normal document layout), increasing downward. Internally this is flipped to
+// PDF's bottom-left origin.
+
+function makePdfDoc(opts) {
+  opts = opts || {};
+  const PAGE_W = opts.width || 595.28;  // A4 pt
+  const PAGE_H = opts.height || 841.89;
+
+  const objects = [];      // array of strings, index 0 => object number 1
+  const pageObjNums = [];  // object numbers of each page
+  let curContent = '';     // content stream text being built for current page
+  let curResources = { fonts: {}, images: {} }; // resource names used on current page
+  let imgCounter = 0;
+
+  const fontObjNums = {}; // baseFontName -> obj number (created lazily, shared across pages)
+
+  function newObj(bodyFn) {
+    const num = objects.length + 1;
+    objects.push(null); // placeholder
+    objects[num - 1] = bodyFn(num);
+    return num;
+  }
+
+  function esc(str) {
+    // Standard Type1 fonts (no embedded encoding) only support byte codes 0-255
+    // (Latin-1 / WinAnsi-ish). Normalize common "smart" punctuation to ASCII and
+    // drop anything else outside that range so we never emit a mangled byte.
+    const cleaned = String(str)
+      .replace(/[‘’]/g, "'")
+      .replace(/[“”]/g, '"')
+      .replace(/[–—]/g, '-')
+      .replace(/−/g, '-')
+      .replace(/…/g, '...')
+      .split('')
+      .map(ch => (ch.charCodeAt(0) <= 255 ? ch : '?'))
+      .join('');
+    return cleaned.replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)');
+  }
+
+  function ensureFont(baseFont) {
+    if (fontObjNums[baseFont]) return fontObjNums[baseFont];
+    const num = newObj(n => `${n} 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /${baseFont} /Encoding /WinAnsiEncoding >>\nendobj\n`);
+    fontObjNums[baseFont] = num;
+    return num;
+  }
+
+  function flushPage() {
+    const fontRes = Object.keys(curResources.fonts).map(name => `/${name} ${curResources.fonts[name]} 0 R`).join(' ');
+    const imgRes = Object.keys(curResources.images).map(name => `/${name} ${curResources.images[name]} 0 R`).join(' ');
+    const resourceDict = `<< /Font << ${fontRes} >> /XObject << ${imgRes} >> /ProcSet [/PDF /Text /ImageC] >>`;
+
+    const contentObjNum = newObj(n => {
+      const body = curContent;
+      return `${n} 0 obj\n<< /Length ${byteLength(body)} >>\nstream\n${body}\nendstream\nendobj\n`;
+    });
+
+    const pageObjNum = newObj(n => `${n} 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${PAGE_W} ${PAGE_H}] /Resources ${resourceDict} /Contents ${contentObjNum} 0 R >>\nendobj\n`);
+    pageObjNums.push(pageObjNum);
+
+    curContent = '';
+    curResources = { fonts: {}, images: {} };
+  }
+
+  function byteLength(str) {
+    // str is a "binary string" (each char code is one byte 0-255)
+    return str.length;
+  }
+
+  // Reserve object 1 (Catalog) and 2 (Pages) -- filled in at build() once page list is known.
+  newObj(() => null); // #1 catalog placeholder
+  newObj(() => null); // #2 pages placeholder
+
+  let pageStarted = false;
+
+  const doc = {
+    addPage() {
+      if (pageStarted) flushPage();
+      pageStarted = true;
+      // Each page has its own resource dict, so re-register whichever font/size
+      // was active -- otherwise text drawn right after addPage() would reference
+      // a font name that doesn't exist in the new page's /Font dict.
+      doc.setFont(doc._curBaseFont || 'Helvetica');
+    },
+
+    setFont(baseFont) {
+      // baseFont e.g. 'Helvetica', 'Helvetica-Bold'
+      doc._curBaseFont = baseFont;
+      const objNum = ensureFont(baseFont);
+      let name = Object.keys(curResources.fonts).find(k => curResources.fonts[k] === objNum);
+      if (!name) {
+        name = 'F' + (Object.keys(curResources.fonts).length + 1) + '_' + baseFont.replace(/[^A-Za-z]/g, '');
+        curResources.fonts[name] = objNum;
+      }
+      doc._curFontName = name;
+    },
+
+    text(x, y, str, size) {
+      const yy = PAGE_H - y;
+      curContent += `BT /${doc._curFontName} ${size} Tf 1 0 0 1 ${x.toFixed(2)} ${yy.toFixed(2)} Tm (${esc(str)}) Tj ET\n`;
+    },
+
+    setStrokeColor(r, g, b) { curContent += `${r} ${g} ${b} RG\n`; },
+    setFillColor(r, g, b) { curContent += `${r} ${g} ${b} rg\n`; },
+    setLineWidth(w) { curContent += `${w} w\n`; },
+
+    line(x1, y1, x2, y2) {
+      const yy1 = PAGE_H - y1, yy2 = PAGE_H - y2;
+      curContent += `${x1.toFixed(2)} ${yy1.toFixed(2)} m ${x2.toFixed(2)} ${yy2.toFixed(2)} l S\n`;
+    },
+
+    rectStroke(x, y, w, h) {
+      const yy = PAGE_H - y - h;
+      curContent += `${x.toFixed(2)} ${yy.toFixed(2)} ${w.toFixed(2)} ${h.toFixed(2)} re S\n`;
+    },
+
+    rectFill(x, y, w, h) {
+      const yy = PAGE_H - y - h;
+      curContent += `${x.toFixed(2)} ${yy.toFixed(2)} ${w.toFixed(2)} ${h.toFixed(2)} re f\n`;
+    },
+
+    // points: array of [x, y] pairs in the public y-down-from-top coordinate system.
+    // Fills an arbitrary closed polygon -- used for pie-chart slices etc.
+    polygonFill(points, r, g, b) {
+      if (!points || points.length < 3) return;
+      curContent += `${r} ${g} ${b} rg\n`;
+      const [x0, y0] = points[0];
+      curContent += `${x0.toFixed(2)} ${(PAGE_H - y0).toFixed(2)} m\n`;
+      for (let i = 1; i < points.length; i++) {
+        const [px, py] = points[i];
+        curContent += `${px.toFixed(2)} ${(PAGE_H - py).toFixed(2)} l\n`;
+      }
+      curContent += `h f\n`;
+    },
+
+    // jpegBinaryStr: raw JPEG bytes as a "binary string" (one char = one byte)
+    addJpegImage(jpegBinaryStr, pxWidth, pxHeight, x, y, w, h) {
+      imgCounter++;
+      const imgObjNum = newObj(n => `${n} 0 obj\n<< /Type /XObject /Subtype /Image /Width ${pxWidth} /Height ${pxHeight} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${byteLength(jpegBinaryStr)} >>\nstream\n${jpegBinaryStr}\nendstream\nendobj\n`);
+      const name = 'Im' + imgCounter;
+      curResources.images[name] = imgObjNum;
+      const yy = PAGE_H - y - h;
+      curContent += `q ${w.toFixed(2)} 0 0 ${h.toFixed(2)} ${x.toFixed(2)} ${yy.toFixed(2)} cm /${name} Do Q\n`;
+    },
+
+    pageWidth: PAGE_W,
+    pageHeight: PAGE_H,
+
+    build() {
+      if (pageStarted) flushPage();
+
+      objects[0] = `1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n`;
+      objects[1] = `2 0 obj\n<< /Type /Pages /Kids [${pageObjNums.map(n => n + ' 0 R').join(' ')}] /Count ${pageObjNums.length} >>\nendobj\n`;
+
+      let out = '%PDF-1.4\n%\xE2\xE3\xCF\xD3\n';
+      const offsets = [0]; // 0th entry unused (object 0 is free)
+      for (let i = 0; i < objects.length; i++) {
+        offsets.push(byteLength(out));
+        out += objects[i];
+      }
+      const xrefOffset = byteLength(out);
+      out += `xref\n0 ${objects.length + 1}\n`;
+      out += `0000000000 65535 f \n`;
+      for (let i = 1; i <= objects.length; i++) {
+        out += String(offsets[i]).padStart(10, '0') + ' 00000 n \n';
+      }
+      out += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF`;
+      return out;
+    }
+  };
+
+  doc.setFont('Helvetica');
+  return doc;
+}
+
+
+// ===== PDF report (selected month) =====
+const C_G=[0.043,0.420,0.227],C_GL=[0.906,0.957,0.925],C_GO=[0.722,0.525,0.180],C_GOL=[0.969,0.925,0.839],C_R=[0.702,0.255,0.231];
+const fc=(d,c)=>d.setFillColor(c[0],c[1],c[2]), blk=d=>d.setFillColor(0,0,0);
+function pdfTitle(d,x,y,t){fc(d,C_G);d.rectFill(x,y-11,4,15);blk(d);d.setFont('Helvetica-Bold');d.text(x+10,y,t,13);d.setFont('Helvetica');return y+16}
+function pdfCards(d,o){const gap=8,w=(o.width-gap*(o.cols-1))/o.cols,h=44;o.cards.forEach((c,i)=>{const bx=o.x+(i%o.cols)*(w+gap),by=o.y+Math.floor(i/o.cols)*(h+gap);fc(d,c.accent?C_GOL:C_GL);d.rectFill(bx,by,w,h);fc(d,c.accent?C_GO:C_G);d.rectFill(bx,by,3,h);blk(d);d.setFont('Helvetica-Bold');d.text(bx+10,by+20,String(c.value),12.5);d.setFont('Helvetica');d.text(bx+10,by+34,c.label,8)});return o.y+Math.ceil(o.cards.length/o.cols)*(h+gap)}
+function pdfBars(d,o){d.setFont('Helvetica-Bold');d.text(o.x,o.y,o.title,12);d.setFont('Helvetica');const top=o.y+24,bot=o.y+o.height-16,H=Math.max(10,bot-top),max=Math.max(1,...o.groups.flatMap(g=>g.bars.map(b=>b.value))),gw=o.width/o.groups.length,n=o.groups[0].bars.length,bw=Math.min(26,(gw-12-3*(n-1))/n);
+  d.setStrokeColor(.75,.75,.75);d.setLineWidth(.7);d.line(o.x,bot,o.x+o.width,bot);
+  o.groups.forEach((g,gi)=>{const gx=o.x+gi*gw+(gw-(bw*n+3*(n-1)))/2;g.bars.forEach((b,bi)=>{const bh=b.value/max*H,bx=gx+bi*(bw+3),by=bot-bh;fc(d,b.color);d.rectFill(bx,by,bw,Math.max(0,bh));blk(d);const l='£'+Math.round(b.value).toLocaleString('en-GB');d.text(bx+bw/2-l.length*1.9,Math.max(top-2,by-4),l,7)});d.text(o.x+gi*gw+gw/2-String(g.label).length*1.9,bot+12,String(g.label),7.5)});
+  let lx=o.x;o.legend.forEach(l=>{fc(d,l.color);d.rectFill(lx,o.y+o.height-2,9,9);blk(d);d.text(lx+13,o.y+o.height+6,l.label,8.5);lx+=13+l.label.length*4.6+14});blk(d);return o.y+o.height+12}
+function pdfPie(d,o){d.setFont('Helvetica-Bold');d.text(o.x,o.y,o.title,12);d.setFont('Helvetica');const cx=o.x+60,cy=o.y+70,r=52,tot=o.slices.reduce((a,s)=>a+Math.max(0,s.value),0);
+  if(tot<=0){d.text(o.x,cy,'No data this month',10);return o.y+110}
+  let a0=-Math.PI/2;o.slices.forEach(s=>{const v=Math.max(0,s.value);if(!v)return;const ang=v/tot*Math.PI*2,segs=Math.max(2,Math.ceil(ang*180/Math.PI/6)),pts=[[cx,cy]];for(let i=0;i<=segs;i++){const a=a0+ang*i/segs;pts.push([cx+r*Math.cos(a),cy+r*Math.sin(a)])}d.polygonFill(pts,s.color[0],s.color[1],s.color[2]);a0+=ang});blk(d);
+  let ly=cy-r+6;o.slices.forEach(s=>{fc(d,s.color);d.rectFill(o.x+140,ly,11,11);blk(d);d.text(o.x+156,ly+9,s.label+': '+fmt2(s.value)+' ('+(Math.max(0,s.value)/tot*100).toFixed(1)+'%)',9.5);ly+=20});return cy+r+18}
+function pdfTable(d,o){let y=o.y;const W=o.cw.reduce((a,b)=>a+b,0),rh=15;const hdr=()=>{fc(d,C_GL);d.rectFill(o.x,y,W,rh);blk(d);d.setFont('Helvetica-Bold');let cx=o.x;o.headers.forEach((h,i)=>{d.text(cx+4,y+rh-4,h,8.5);cx+=o.cw[i]});y+=rh;d.setStrokeColor(.68,.68,.68);d.setLineWidth(.6);d.line(o.x,y,o.x+W,y)};
+  hdr();d.setFont('Helvetica');o.rows.forEach((r,ri)=>{if(y+rh>d.pageHeight-40){d.addPage();y=50;hdr();d.setFont('Helvetica')}if(ri%2){d.setFillColor(.966,.976,.969);d.rectFill(o.x,y,W,rh);blk(d)}let cx=o.x;r.forEach((c,i)=>{d.text(cx+4,y+rh-4,String(c),8.5);cx+=o.cw[i]});y+=rh;d.setStrokeColor(.87,.87,.87);d.setLineWidth(.4);d.line(o.x,y,o.x+W,y)});return y+12}
+const need=(d,y,n)=>y+n>d.pageHeight-40?(d.addPage(),50):y;
+
+function buildReportPdf(from,to,label,fname){
+  const m=rangeStats(from,to),k=to.slice(0,7),d=makePdfDoc(),M=40,CW=d.pageWidth-M*2,gen=new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  d.addPage();fc(d,C_G);d.rectFill(0,0,d.pageWidth,68);fc(d,C_GO);d.rectFill(0,68,d.pageWidth,4);d.setFillColor(1,1,1);
+  d.setFont('Helvetica-Bold');d.text(M,32,'Evolution Golf - Custom Fitting',17);d.setFont('Helvetica');d.text(M,51,'Report: '+label,12);d.text(d.pageWidth-M-170,51,'Generated '+gen,9);blk(d);
+  let y=98;const rt=getRating(m.roas,!!m.spend);
+  y=pdfTitle(d,M,y,'Performance');
+  y=pdfCards(d,{x:M,y,width:CW,cols:4,cards:[{label:'Sales (inc VAT)',value:fmt2(m.total)},{label:'Net sales (ex VAT)',value:fmt2(m.net)},{label:'Profit after goods',value:fmt2(m.profit)},{label:'Net margin',value:pct(m.margin)},{label:'Ad spend',value:fmt2(m.spend)},{label:'Net profit after ads',value:fmt2(m.netProfit),accent:m.netProfit>=0},{label:'ROAS',value:(m.spend?m.roas.toFixed(2)+'x':'n/a')+' - '+rt.label,accent:true},{label:'Cost per booking',value:fmt2(m.cpb)}]})+8;
+  y=pdfTitle(d,M,y,'Bookings & bay utilisation');
+  y=pdfCards(d,{x:M,y,width:CW,cols:4,cards:[{label:'Bookings',value:m.bookings},{label:'Orders',value:m.orders},{label:'Conversion',value:pct(m.conv)},{label:'Bay utilisation',value:pct(m.util),accent:true}]});
+  d.text(M,y+4,m.bookings+' bookings x '+settings.avgHours+' hrs = '+m.hours.toFixed(0)+' hrs of '+m.cap+' hrs capacity',9);y+=26;
+  fc(d,C_GL);d.rectFill(M,y,CW,12);fc(d,C_G);d.rectFill(M,y,CW*Math.min(1,m.util/100),12);blk(d);y+=34;
+  y=need(d,y,150);y=pdfPie(d,{x:M,y,title:'Where the money went',slices:[{label:'Cost of goods',value:m.cogs,color:C_R},{label:'Ad spend',value:m.spend,color:C_GO},{label:'Net profit',value:Math.max(0,m.netProfit),color:C_G}]});
+  const keys=[];for(let i=5;i>=0;i--)keys.push(shiftKey(k,-i));const ms=keys.map(monthStats);
+  y=need(d,y,180);y=pdfBars(d,{x:M,y,width:CW,height:150,title:'6 months to '+mLabel(k)+' - net sales vs ad spend',groups:ms.map((x,i)=>({label:mLabel(keys[i]).slice(0,3),bars:[{value:x.net,color:C_G},{value:x.spend,color:C_R}]})),legend:[{label:'Net sales',color:C_G},{label:'Ad spend',color:C_R}]});
+  y=need(d,y,60);y=pdfTitle(d,M,y,'Sales log');
+  y=pdfTable(d,{x:M,y,cw:[80,88,82,90,82,90],headers:['Date','Total (inc VAT)','Net Sales','Cost of Goods','Profit','Net Margin'],rows:m.sales.length?[...m.sales].sort((a,b)=>a.date.localeCompare(b.date)).map(s=>[s.date,fmt2(s.total),fmt2(s.net),fmt2(s.cogs),fmt2(s.profit),pct(s.margin)]):[['No sales logged','','','','','']]});
+  const bin=d.build(),b=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)b[i]=bin.charCodeAt(i);
+  dl(new Blob([b],{type:'application/pdf'}),'evolution-golf-report-'+fname+'.pdf');showToast('PDF downloaded: '+label);
+}
+function pdfRange(){
+  const p=$('pdfPeriod').value,now=new Date(),[y,mo]=selMonth.split('-').map(Number);
+  if(p==='month')return{from:selMonth+'-01',to:iso(new Date(y,mo,0)),label:mLabel(selMonth),fname:selMonth};
+  if(p==='mtd')return{from:curKey()+'-01',to:iso(now),label:'Month to date ('+iso(now)+')',fname:'month-to-date'};
+  if(p==='ytd')return{from:now.getFullYear()+'-01-01',to:iso(now),label:'Year to date '+now.getFullYear(),fname:'year-to-date'};
+  return{from:$('pdfFrom').value,to:$('pdfTo').value,label:$('pdfFrom').value+' to '+$('pdfTo').value,fname:$('pdfFrom').value+'_to_'+$('pdfTo').value};
+}
+function pdfUpdate(){const c=$('pdfPeriod').value==='custom';$('pdfFromWrap').style.display=$('pdfToWrap').style.display=c?'block':'none';const r=pdfRange();$('pdfInfo').textContent=r.from&&r.to?'Covers '+r.from+' to '+r.to:''}
+$('pdfPeriod').onchange=pdfUpdate;$('pdfFrom').onchange=pdfUpdate;$('pdfTo').onchange=pdfUpdate;
+$('pdfBtn').onclick=()=>{$('pdfFrom').value=selMonth+'-01';$('pdfTo').value=todayStr();$('pdfPeriod').value='month';pdfUpdate();$('pdfOv').style.display='flex'};
+$('pdfGo').onclick=()=>{const r=pdfRange();if(!r.from||!r.to||r.from>r.to){showToast('Choose a valid date range');return}
+  try{buildReportPdf(r.from,r.to,r.label,r.fname);$('pdfOv').style.display='none'}catch(e){console.error(e);showToast('PDF failed — see console')}};
+
+$('copyDataBtn').onclick=()=>{const t=JSON.stringify({updated:todayStr(),sales,months,settings});const ta=$('dataOut');ta.style.display='block';ta.value=t;ta.select();let ok=false;try{ok=document.execCommand('copy')}catch(e){}showToast(ok?'Data copied — paste it into the chat':'Select all in the box and copy it')};
+async function boot(){
+  try{
+    if(/^https?:/.test(location.protocol)){
+      const r=await fetch('data.json?v='+Date.now(),{cache:'no-store'});
+      if(r.ok){const d=await r.json();sales=d.sales||[];months=d.months||{};settings=Object.assign(settings,d.settings||{});
+        document.body.classList.add('ro');
+        document.querySelector('.top p').textContent='Live dashboard · data last updated '+(d.updated||'—')}
+    }
+  }catch(e){}
+  selMonth=curKey();render();
+}
+boot();
+</script>
+</body>
+</html>
