@@ -90,6 +90,8 @@ input,select{width:100%;padding:8px 10px;border:1px solid var(--border);border-r
   <nav id="nav">
     <button data-page="dashboard" class="active">Dashboard</button>
     <button data-page="sales">Sales log</button>
+    <button data-page="compare">Compare</button>
+    <button data-page="ytd">Year overview</button>
     <button data-page="history">History</button>
     <button data-page="settings">Settings</button>
   </nav>
@@ -119,6 +121,29 @@ input,select{width:100%;padding:8px 10px;border:1px solid var(--border);border-r
   <section class="page" id="page-sales">
     <div class="grid kpis" id="salesKpis"></div>
     <div class="panel"><h2>Sales this month <button class="btn small" id="addSaleBtn2">+ Add sale</button></h2><div id="salesList"></div></div>
+  </section>
+
+  <section class="page" id="page-compare">
+    <div class="panel"><h2>Compare months</h2>
+      <div class="form-grid">
+        <div><label>Month A</label><select id="cmpA"></select></div>
+        <div><label>Compare against (B)</label><select id="cmpB"></select></div>
+      </div>
+      <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn secondary small" id="cmpPrev">A vs previous month</button><button class="btn secondary small" id="cmpYear">A vs same month last year</button></div>
+    </div>
+    <div class="panel"><h2>Key metrics</h2><div class="chart"><canvas id="cCmp"></canvas></div></div>
+    <div class="panel"><h2>Side by side</h2><div style="overflow:auto"><table><thead><tr><th>Metric</th><th class="num" id="cmpHA"></th><th class="num" id="cmpHB"></th><th class="num">Change</th><th class="num">% change</th></tr></thead><tbody id="cmpRows"></tbody></table></div></div>
+  </section>
+
+  <section class="page" id="page-ytd">
+    <div class="panel"><h2 id="ytdTitle">Year overview <select id="ytdYear" style="width:auto"></select></h2><div class="note" id="ytdSub"></div></div>
+    <div id="ytdHero" class="hero"></div>
+    <div class="grid kpis" id="ytdKpis"></div>
+    <div class="grid two">
+      <div class="panel"><h2>Net sales, ad spend &amp; ROAS by month</h2><div class="chart"><canvas id="cYtdM"></canvas></div></div>
+      <div class="panel"><h2>Cumulative net profit</h2><div class="chart"><canvas id="cYtdC"></canvas></div></div>
+    </div>
+    <div class="panel"><h2>Month by month</h2><div style="overflow:auto"><table><thead><tr><th>Month</th><th class="num">Net sales</th><th class="num">Profit</th><th class="num">Ad spend</th><th class="num">Net profit</th><th class="num">Bookings</th><th class="num">Conv.</th><th class="num">Bay util.</th><th>ROAS</th></tr></thead><tbody id="ytdRows"></tbody></table></div><p class="note" id="ytdHigh"></p></div>
   </section>
 
   <section class="page" id="page-history">
@@ -198,7 +223,7 @@ function saveSettings(){saveLS(LS_SET,settings)}
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
 
 // ===== formatters =====
-const fmt0=n=>'£'+Math.round(n).toLocaleString('en-GB');
+const fmt0=n=>(n<0?'-':'')+'£'+Math.abs(Math.round(n)).toLocaleString('en-GB');
 const fmt2=n=>(n<0?'-':'')+'£'+Math.abs(n).toLocaleString('en-GB',{minimumFractionDigits:2,maximumFractionDigits:2});
 const pct=n=>(isFinite(n)?n:0).toFixed(1)+'%';
 function mLabel(k){const[y,m]=k.split('-');return new Date(y,m-1,1).toLocaleDateString('en-GB',{month:'long',year:'numeric'})}
@@ -243,7 +268,7 @@ function allMonthKeys(){const s=new Set(Object.keys(months));sales.forEach(x=>x.
 
 // ===== state / nav =====
 let selMonth=curKey(),page='dashboard',charts={};
-function showPage(p){page=p;document.querySelectorAll('.page').forEach(e=>e.classList.toggle('active',e.id==='page-'+p));document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===p));$('monthbar').style.display=(p==='history'||p==='settings')?'none':'flex';render()}
+function showPage(p){page=p;document.querySelectorAll('.page').forEach(e=>e.classList.toggle('active',e.id==='page-'+p));document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===p));$('monthbar').style.display=(p==='dashboard'||p==='sales')?'flex':'none';render()}
 document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>showPage(b.dataset.page));
 $('prevM').onclick=()=>{selMonth=shiftKey(selMonth,-1);render()};
 $('nextM').onclick=()=>{selMonth=shiftKey(selMonth,1);render()};
@@ -258,6 +283,8 @@ function render(){
   if(page==='dashboard')renderDashboard();
   else if(page==='sales')renderSales();
   else if(page==='history')renderHistory();
+  else if(page==='compare')renderCompare();
+  else if(page==='ytd')renderYtd();
   else renderSettings();
 }
 
@@ -307,6 +334,47 @@ function renderHistory(){
   mk('cHist',{data:{labels:keys.map(mLabel),datasets:[{type:'bar',label:'Net sales',data:ms.map(x=>x.net),backgroundColor:'#0b6b3a',borderRadius:3},{type:'bar',label:'Ad spend',data:ms.map(x=>x.spend),backgroundColor:'#b3413b',borderRadius:3},{type:'line',label:'Net profit',data:ms.map(x=>x.netProfit),borderColor:'#b8862e',backgroundColor:'#b8862e',tension:.3}]},options:{responsive:true,maintainAspectRatio:false,plugins:legendBottom}});
 }
 
+function monthOptions(){const s=new Set(allMonthKeys());for(let i=0;i<24;i++)s.add(shiftKey(curKey(),-i));return [...s].sort().reverse()}
+let cmpA=null,cmpB=null;
+function fillCmpSelects(){const o=monthOptions().map(k=>`<option value="${k}">${mLabel(k)}</option>`).join('');$('cmpA').innerHTML=o;$('cmpB').innerHTML=o;$('cmpA').value=cmpA;$('cmpB').value=cmpB}
+$('cmpA').onchange=()=>{cmpA=$('cmpA').value;renderCompare()};
+$('cmpB').onchange=()=>{cmpB=$('cmpB').value;renderCompare()};
+$('cmpPrev').onclick=()=>{cmpB=shiftKey(cmpA,-1);renderCompare()};
+$('cmpYear').onclick=()=>{cmpB=shiftKey(cmpA,-12);renderCompare()};
+function renderCompare(){
+  if(!cmpA){cmpA=selMonth;cmpB=shiftKey(selMonth,-1)}
+  fillCmpSelects();
+  const a=monthStats(cmpA),b=monthStats(cmpB);
+  $('cmpHA').textContent=mLabel(cmpA);$('cmpHB').textContent=mLabel(cmpB);
+  const rows=[['Net sales (ex VAT)','net',fmt0,1],['Sales (inc VAT)','total',fmt0,1],['Profit after goods','profit',fmt0,1],['Net margin','margin',pct,1],['Ad spend','spend',fmt0,0],['Net profit after ads','netProfit',fmt0,1],['ROAS','roas',v=>v.toFixed(2)+'×',1],['Bookings','bookings',v=>v,1],['Orders','orders',v=>v,1],['Conversion','conv',pct,1],['Cost per booking','cpb',fmt2,0],['Bay utilisation','util',pct,1],['Sales logged','count',v=>v,1]];
+  $('cmpRows').innerHTML=rows.map(([l,k,f,up])=>{const d=a[k]-b[k],pc=b[k]?d/Math.abs(b[k])*100:(a[k]?100:0),good=d===0?null:(d>0)===!!up;const col=good===null?'':good?'color:var(--green);font-weight:700':'color:var(--red);font-weight:700';const sign=d>0?'+':'';
+    const dd=(k==='margin'||k==='conv'||k==='util')?sign+d.toFixed(1)+' pts':sign+(f===fmt0||f===fmt2?f(d):f===(v=>v)?d:(k==='roas'?d.toFixed(2)+'×':d));
+    return `<tr><td><b>${l}</b></td><td class="num">${f(a[k])}</td><td class="num">${f(b[k])}</td><td class="num" style="${col}">${dd}</td><td class="num" style="${col}">${b[k]||a[k]?sign+pc.toFixed(1)+'%':'—'}</td></tr>`}).join('');
+  mk('cCmp',{type:'bar',data:{labels:['Net sales','Profit after goods','Ad spend','Net profit after ads'],datasets:[{label:mLabel(cmpA),data:[a.net,a.profit,a.spend,a.netProfit],backgroundColor:'#0b6b3a',borderRadius:3},{label:mLabel(cmpB),data:[b.net,b.profit,b.spend,b.netProfit],backgroundColor:'#b8862e',borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:legendBottom}});
+}
+function renderYtd(){
+  const now=new Date(),cy=now.getFullYear();
+  const years=new Set([cy]);allMonthKeys().forEach(k=>years.add(+k.slice(0,4)));
+  const ys=[...years].sort().reverse();
+  if(!window._ytdYear||!years.has(window._ytdYear))window._ytdYear=cy;
+  $('ytdYear').innerHTML=ys.map(y=>`<option ${y===window._ytdYear?'selected':''}>${y}</option>`).join('');
+  const Y=window._ytdYear,last=Y===cy?now.getMonth()+1:12,to=Y===cy?iso(now):Y+'-12-31';
+  const m=rangeStats(Y+'-01-01',to);
+  $('ytdSub').textContent=(Y===cy?'Year to date: 1 Jan – '+iso(now):'Full year '+Y)+' · '+m.count+' sales logged';
+  $('ytdHero').innerHTML=`<div><div class="note">Return on ad spend</div><div class="big">${m.spend?m.roas.toFixed(2)+'×':'—'}</div></div><div>${ratingBadge(m.roas,!!m.spend)}</div><div style="flex:1"></div><div class="note" style="text-align:right">${m.bookings} bookings · ${m.orders} orders</div>`;
+  $('ytdKpis').innerHTML=[kpi('Sales (inc VAT)',fmt0(m.total),m.count+' sales'),kpi('Net sales (ex VAT)',fmt0(m.net)),kpi('Profit after goods',fmt0(m.profit),pct(m.margin)+' net margin'),kpi('Ad spend',fmt0(m.spend)),kpi('Net profit after ads',fmt0(m.netProfit),'',m.netProfit>=0?'gold':'red'),kpi('Bookings',m.bookings,'cost per booking '+fmt2(m.cpb)),kpi('Conversion',pct(m.conv),m.orders+' orders'),kpi('Avg bay utilisation',pct(m.util),m.hours.toFixed(0)+' of '+m.cap+' hrs','gold')].join('');
+  const keys=[];for(let i=1;i<=last;i++)keys.push(Y+'-'+String(i).padStart(2,'0'));
+  const ms=keys.map(monthStats);
+  const lab=keys.map(k=>mLabel(k).slice(0,3));
+  mk('cYtdM',{data:{labels:lab,datasets:[{type:'bar',label:'Net sales',data:ms.map(x=>x.net),backgroundColor:'#0b6b3a',borderRadius:3,yAxisID:'y'},{type:'bar',label:'Ad spend',data:ms.map(x=>x.spend),backgroundColor:'#b3413b',borderRadius:3,yAxisID:'y'},{type:'line',label:'ROAS ×',data:ms.map(x=>x.roas),borderColor:'#b8862e',backgroundColor:'#b8862e',tension:.3,yAxisID:'y1'}]},options:{responsive:true,maintainAspectRatio:false,plugins:legendBottom,scales:{y:{beginAtZero:true},y1:{position:'right',beginAtZero:true,grid:{drawOnChartArea:false}}}}});
+  let run=0;const cum=ms.map(x=>run+=x.netProfit);
+  mk('cYtdC',{type:'line',data:{labels:lab,datasets:[{label:'Cumulative net profit (£)',data:cum,borderColor:'#0b6b3a',backgroundColor:'rgba(11,107,58,.15)',fill:true,tension:.25}]},options:{responsive:true,maintainAspectRatio:false,plugins:legendBottom}});
+  $('ytdRows').innerHTML=ms.map((x,i)=>`<tr class="click" onclick="selMonth='${keys[i]}';showPage('dashboard')"><td><b>${mLabel(keys[i])}</b></td><td class="num">${fmt0(x.net)}</td><td class="num">${fmt0(x.profit)}</td><td class="num">${fmt0(x.spend)}</td><td class="num">${fmt0(x.netProfit)}</td><td class="num">${x.bookings}</td><td class="num">${x.hasInputs?pct(x.conv):'—'}</td><td class="num">${x.hasInputs?pct(x.util):'—'}</td><td>${ratingBadge(x.roas,!!x.spend)}</td></tr>`).join('')+`<tr style="font-weight:700;background:var(--green-light)"><td>Total / average</td><td class="num">${fmt0(m.net)}</td><td class="num">${fmt0(m.profit)}</td><td class="num">${fmt0(m.spend)}</td><td class="num">${fmt0(m.netProfit)}</td><td class="num">${m.bookings}</td><td class="num">${pct(m.conv)}</td><td class="num">${pct(m.util)}</td><td>${ratingBadge(m.roas,!!m.spend)}</td></tr>`;
+  const withSales=ms.map((x,i)=>({x,k:keys[i]})).filter(o=>o.x.count);
+  if(withSales.length){const bs=withSales.reduce((a,b)=>b.x.net>a.x.net?b:a),wr=withSales.filter(o=>o.x.spend);const br=wr.length?wr.reduce((a,b)=>b.x.roas>a.x.roas?b:a):null;
+    $('ytdHigh').textContent='Best month for sales: '+mLabel(bs.k)+' ('+fmt0(bs.x.net)+' net).'+(br?' Best ROAS: '+mLabel(br.k)+' ('+br.x.roas.toFixed(1)+'×).':'')}else $('ytdHigh').textContent='';
+}
+$('ytdYear').onchange=e=>{window._ytdYear=+e.target.value;renderYtd()};
 const DL=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 function renderSettings(){
   $('setVat').value=settings.vat;$('setAvg').value=settings.avgHours;$('setHours').value=settings.hoursPerDay;
