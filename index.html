@@ -401,7 +401,7 @@ function renderYtd(){
 $('ytdYear').onchange=e=>{window._ytdYear=+e.target.value;renderYtd()};
 ['prStart','prHrs','prBasis','prGoal','prTT','prAov','prMar','prRoas','prConv'].forEach(id=>$(id).addEventListener('input',()=>{if(page==='projection')renderProjection()}));
 function projHrs(){const v=parseFloat($('prHrs').value);return v>0?v:(settings.avgHours||2)}
-function projStart(){if(!$('prStart').value)$('prStart').value=settings.startDate||'2026-04-01';return $('prStart').value}
+function projStart(){if(!$('prStart').value)$('prStart').value=settings.startDate||'2026-03-01';return $('prStart').value}
 function projBase(){
   const now=new Date(),Y=now.getFullYear(),st=projStart(),ytd=rangeStats(st,iso(now)),hrs=projHrs();
   const days=Math.max(1,Math.round((now-new Date(st+'T00:00:00'))/864e5)+1);
