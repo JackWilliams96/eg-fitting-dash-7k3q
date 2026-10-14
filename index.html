@@ -153,21 +153,23 @@ input,select{width:100%;padding:8px 10px;border:1px solid var(--border);border-r
         <div><label>I want to achieve (£)</label><input type="number" id="prGoal" value="150000" step="5000"></div>
         <div><label>Goal type</label><select id="prTT"><option value="net">Net sales (ex VAT)</option><option value="gross">Sales (inc VAT)</option><option value="np">Net profit after ads</option></select></div>
         <div><label>Compare against</label><select id="prBasis"><option value="annual">YTD annualised to a full year</option><option value="ytd">YTD actuals as they stand</option></select></div>
+        <div><label>Trading started (YTD from)</label><input type="date" id="prStart"></div>
       </div>
-      <details style="margin-top:10px"><summary class="note" style="cursor:pointer">Assumptions (default to this year's actuals, editable)</summary>
-        <div class="form-grid" style="margin-top:8px">
-          <div><label>Trading started (YTD from)</label><input type="date" id="prStart"></div>
-          <div><label>Hours per booking</label><input type="number" id="prHrs" step="0.5" placeholder="2"></div>
-          <div><label>AOV – avg sale inc VAT (£)</label><input type="number" id="prAov" step="10" placeholder="auto"></div>
-          <div><label>Net margin %</label><input type="number" id="prMar" step="0.5" placeholder="auto"></div>
-          <div><label>ROAS (×)</label><input type="number" id="prRoas" step="0.5" placeholder="auto"></div>
-          <div><label>Conversion (orders ÷ bookings) %</label><input type="number" id="prConv" step="1" placeholder="auto"></div>
-        </div>
-      </details>
       <p class="note" id="prNote"></p>
     </div>
+    <div class="panel"><h2>Levers <span class="note">leave blank to keep the current (YTD) figure · <a href="#" id="prReset">reset all</a></span></h2>
+      <div class="form-grid">
+        <div><label>Net margin % <span class="note" id="prMarC"></span></label><input type="number" id="prMar" step="0.5" placeholder="current"></div>
+        <div><label>AOV – avg sale inc VAT £ <span class="note" id="prAovC"></span></label><input type="number" id="prAov" step="10" placeholder="current"></div>
+        <div><label>ROAS × <span class="note" id="prRoasC"></span></label><input type="number" id="prRoas" step="0.5" placeholder="current"></div>
+        <div><label>Conversion % <span class="note" id="prConvC"></span></label><input type="number" id="prConv" step="1" placeholder="current"></div>
+        <div><label>Hours per booking <span class="note" id="prHrsC"></span></label><input type="number" id="prHrs" step="0.5" placeholder="2"></div>
+        <div><label>Bay hours available a year <span class="note" id="prCapC"></span></label><input type="number" id="prCap" step="50" placeholder="current"></div>
+      </div>
+      <p class="note">Margin is net margin after goods (profit ÷ net sales). Try 28% to see what it changes.</p>
+    </div>
     <div class="grid kpis" id="prKpis"></div>
-    <div class="panel"><h2 id="prTblT">What it takes</h2><div style="overflow:auto"><table><thead><tr><th>Metric</th><th class="num" id="prHB">This year</th><th class="num" id="prHP">Goal</th><th class="num">Increase</th></tr></thead><tbody id="prRows"></tbody></table></div><p class="note" id="prWarn"></p></div>
+    <div class="panel"><h2 id="prTblT">What it takes</h2><div style="overflow:auto"><table><thead><tr><th>Metric</th><th class="num" id="prHB">This year</th><th class="num">Goal at current levers</th><th class="num" id="prHP">Goal with your levers</th><th class="num">Change vs current</th></tr></thead><tbody id="prRows"></tbody></table></div><p class="note" id="prWarn"></p></div>
     <div class="panel"><h2 id="prChartT">This year vs goal</h2><div class="chart"><canvas id="cProj"></canvas></div></div>
   </section>
 
@@ -399,7 +401,9 @@ function renderYtd(){
     $('ytdHigh').textContent='Best month for sales: '+mLabel(bs.k)+' ('+fmt0(bs.x.net)+' net).'+(br?' Best ROAS: '+mLabel(br.k)+' ('+br.x.roas.toFixed(1)+'×).':'')}else $('ytdHigh').textContent='';
 }
 $('ytdYear').onchange=e=>{window._ytdYear=+e.target.value;renderYtd()};
-['prStart','prHrs','prBasis','prGoal','prTT','prAov','prMar','prRoas','prConv'].forEach(id=>$(id).addEventListener('input',()=>{if(page==='projection')renderProjection()}));
+const PR_IDS=['prStart','prHrs','prBasis','prGoal','prTT','prAov','prMar','prRoas','prConv','prCap'];
+PR_IDS.forEach(id=>$(id).addEventListener('input',()=>{if(page==='projection')renderProjection()}));
+$('prReset').onclick=e=>{e.preventDefault();['prHrs','prAov','prMar','prRoas','prConv','prCap'].forEach(i=>$(i).value='');renderProjection()};
 function projHrs(){const v=parseFloat($('prHrs').value);return v>0?v:(settings.avgHours||2)}
 function projStart(){if(!$('prStart').value)$('prStart').value=settings.startDate||'2026-03-01';return $('prStart').value}
 function projBase(){
@@ -412,24 +416,29 @@ function projBase(){
   const sd=new Date(st+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
   return{b,Y,label:'YTD since '+sd+' ('+days+' days'+(f===1?')':', annualised ×'+f.toFixed(2)+')'),hrs};
 }
+function projSolve(L,goal,tt,b,vat){
+  const denom=L.mar-(L.roas?vat/L.roas:0);let net;
+  if(tt==='net')net=goal;else if(tt==='gross')net=goal/vat;else net=denom>0?goal/denom:NaN;
+  if(!isFinite(net))return null;
+  const gross=net*vat,profit=net*L.mar,spend=L.roas?gross/L.roas:0,fit=L.aov?Math.ceil(gross/L.aov):0,bk=L.conv?Math.ceil(fit/L.conv):0,hrs=bk*L.hrs;
+  return{total:gross,net,profit,spend,netProfit:profit-spend,roas:L.roas,count:fit,aov:L.aov,bookings:bk,hours:hrs,util:L.cap?hrs/L.cap*100:0,margin:L.mar*100,cap:L.cap};
+}
 function renderProjection(){
   const {b,Y,label,hrs:hpb}=projBase(),vat=1+settings.vat/100,num=id=>{const v=parseFloat($(id).value);return isFinite(v)&&v>0?v:null};
-  const aov=num('prAov')||b.aov,mar=(num('prMar')??b.margin)/100,roas=num('prRoas')||b.roas,conv=(num('prConv')??b.conv)/100;
+  const cur={mar:b.margin/100,aov:b.aov,roas:b.roas,conv:b.conv/100,hrs:hpb,cap:b.nxtCap};
+  const lev={mar:(num('prMar')??b.margin)/100,aov:num('prAov')||b.aov,roas:num('prRoas')||b.roas,conv:(num('prConv')??b.conv)/100,hrs:hpb,cap:num('prCap')||b.nxtCap};
+  $('prMarC').textContent='(now '+pct(b.margin)+')';$('prAovC').textContent='(now '+fmt2(b.aov)+')';$('prRoasC').textContent='(now '+(b.roas?b.roas.toFixed(1)+'×':'—')+')';$('prConvC').textContent='(now '+pct(b.conv)+')';$('prHrsC').textContent='(setting '+(settings.avgHours||2)+')';$('prCapC').textContent='(now '+b.nxtCap+')';
   const goal=parseFloat($('prGoal').value)||0,tt=$('prTT').value;
-  $('prNote').textContent='Goal for '+(Y+1)+' vs '+label+'. 1 booking = '+hpb+' hrs of bay time. AOV '+fmt2(b.aov)+' = £'+Math.round(b.rawTotal).toLocaleString('en-GB')+' inc VAT ÷ '+b.rawCount+' sales logged. Margin '+pct(b.margin)+', ROAS '+(b.roas?b.roas.toFixed(1)+'×':'—')+' and conversion '+pct(b.conv)+' are held at YTD actuals unless changed under Assumptions.';
-  let net;const denom=mar-(roas?vat/roas:0);
-  if(tt==='net')net=goal;else if(tt==='gross')net=goal/vat;else net=denom>0?goal/denom:NaN;
-  const warn=[];
-  if(!isFinite(net)){$('prKpis').innerHTML='';$('prRows').innerHTML='';$('prWarn').textContent='That profit goal cannot be reached with this margin and ROAS (ad spend would eat the margin). Raise ROAS or margin under Assumptions.';return}
-  const gross=net*vat,profit=net*mar,spend=roas?gross/roas:0,np=profit-spend,fit=aov?Math.ceil(gross/aov):0,bk=conv?Math.ceil(fit/conv):0,hrs=bk*hpb,util=b.nxtCap?hrs/b.nxtCap*100:0;
-  const g={total:gross,net,profit,spend,netProfit:np,roas,count:fit,orders:fit,bookings:bk,hours:hrs,util,aov,conv:conv*100,margin:mar*100};
-  $('prKpis').innerHTML=[kpi('Fittings (sales) needed',fit,(fit/12).toFixed(1)+' a month · '+(fit/52).toFixed(1)+' a week','gold'),kpi('AOV',fmt2(aov),'avg sale inc VAT'),kpi('Bookings needed',bk||'—','at '+pct(conv*100)+' conversion'),kpi('Ad spend needed',fmt0(spend),'at '+roas.toFixed(1)+'× ROAS'),kpi('Bay utilisation',pct(util),hrs.toFixed(0)+' of '+b.nxtCap+' hrs · '+hpb+' hrs/booking',util>100?'red':'gold'),kpi('Net profit after ads',fmt0(np),pct(mar*100)+' margin before ads',np>=0?'':'red')].join('');
-  const inc=(x,y)=>x?((y-x)/Math.abs(x)*100):null;
-  const rows=[['Sales (inc VAT)',b.total,gross,fmt0],['Net sales (ex VAT)',b.net,net,fmt0],['Profit after goods',b.profit,profit,fmt0],['Ad spend',b.spend,spend,fmt0],['Net profit after ads',b.netProfit,np,fmt0],['Fittings (sales)',b.count,fit,v=>Math.round(v)],['AOV (avg sale inc VAT)',b.aov,aov,fmt2],['Bookings (1 = '+hpb+' hrs)',b.bookings,bk,v=>Math.round(v)],['Bay hours used',b.hours,hrs,v=>v.toFixed(0)],['Bay utilisation',b.util,util,pct],['ROAS',b.roas,roas,v=>v.toFixed(2)+'×']];
-  $('prHB').textContent=Y;$('prHP').textContent=(Y+1)+' goal';$('prChartT').textContent=Y+' vs '+(Y+1)+' goal';
-  $('prRows').innerHTML=rows.map(([l,x,y,f])=>{const c=inc(x,y);return `<tr><td><b>${l}</b></td><td class="num">${f(x)}</td><td class="num">${f(y)}</td><td class="num">${c===null?'—':(c>=0?'+':'')+c.toFixed(0)+'%'}</td></tr>`}).join('');
-  $('prWarn').textContent=util>100?'Warning: this needs more than 100% of bay capacity ('+util.toFixed(0)+'%). You would need more opening hours or a second bay.':(util>=85?'Note: utilisation above 85% means the bay is nearly full.':'');
-  mk('cProj',{type:'bar',data:{labels:['Net sales','Profit after goods','Ad spend','Net profit after ads'],datasets:[{label:String(Y),data:[b.net,b.profit,b.spend,b.netProfit],backgroundColor:'#b8862e',borderRadius:3},{label:(Y+1)+' goal',data:[net,profit,spend,np],backgroundColor:'#0b6b3a',borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:legendBottom}});
+  $('prNote').textContent='Goal for '+(Y+1)+' vs '+label+'. 1 booking = '+hpb+' hrs. AOV '+fmt2(b.aov)+' = £'+Math.round(b.rawTotal).toLocaleString('en-GB')+' inc VAT ÷ '+b.rawCount+' sales logged.';
+  const c=projSolve(cur,goal,tt,b,vat),g=projSolve(lev,goal,tt,b,vat);
+  if(!g||!c){$('prKpis').innerHTML='';$('prRows').innerHTML='';$('prWarn').textContent='That profit goal cannot be reached with this margin and ROAS (ad spend would eat the margin). Raise ROAS or margin in Levers.';return}
+  $('prKpis').innerHTML=[kpi('Fittings (sales) needed',g.count,(g.count/12).toFixed(1)+' a month · '+(g.count/52).toFixed(1)+' a week'+(g.count!==c.count?' (was '+c.count+')':''),'gold'),kpi('Net profit after ads',fmt0(g.netProfit),'at '+pct(lev.mar*100)+' margin'+(Math.abs(g.netProfit-c.netProfit)>1?' · '+(g.netProfit>=c.netProfit?'+':'')+fmt0(g.netProfit-c.netProfit)+' vs current':''),g.netProfit>=0?'gold':'red'),kpi('Profit after goods',fmt0(g.profit),'net sales '+fmt0(g.net)),kpi('Ad spend needed',fmt0(g.spend),'at '+(g.roas?g.roas.toFixed(1):'—')+'× ROAS'),kpi('Bookings needed',g.bookings||'—','at '+pct(lev.conv*100)+' conversion'),kpi('Bay utilisation',pct(g.util),g.hours.toFixed(0)+' of '+g.cap.toFixed(0)+' hrs',g.util>100?'red':'gold')].join('');
+  const ch=(x,y)=>x?((y-x)/Math.abs(x)*100):null;
+  const rows=[['Sales (inc VAT)','total',fmt0],['Net sales (ex VAT)','net',fmt0],['Net margin','margin',pct],['Profit after goods','profit',fmt0],['Ad spend','spend',fmt0],['Net profit after ads','netProfit',fmt0],['Fittings (sales)','count',v=>Math.round(v)],['AOV (avg sale inc VAT)','aov',fmt2],['Bookings','bookings',v=>Math.round(v)],['Bay hours used','hours',v=>v.toFixed(0)],['Bay utilisation','util',pct],['ROAS','roas',v=>v.toFixed(2)+'×']];
+  $('prHB').textContent=Y+' YTD';$('prHP').textContent=(Y+1)+' goal, your levers';$('prChartT').textContent=Y+' vs '+(Y+1)+' goal';
+  $('prRows').innerHTML=rows.map(([l,k,f])=>{const d=ch(c[k],g[k]);const dd=k==='margin'||k==='util'?((g[k]>=c[k]?'+':'')+(g[k]-c[k]).toFixed(1)+' pts'):(d===null?'—':(d>=0?'+':'')+d.toFixed(0)+'%');const same=Math.abs(g[k]-c[k])<1e-6;return `<tr><td><b>${l}</b></td><td class="num">${f(b[k]!==undefined?b[k]:0)}</td><td class="num">${f(c[k])}</td><td class="num"><b>${f(g[k])}</b></td><td class="num">${same?'—':dd}</td></tr>`}).join('');
+  $('prWarn').textContent=g.util>100?'Warning: needs more than 100% of bay capacity ('+g.util.toFixed(0)+'%). You would need more opening hours or a second bay.':(g.util>=85?'Note: utilisation above 85% means the bay is nearly full.':'');
+  mk('cProj',{type:'bar',data:{labels:['Net sales','Profit after goods','Ad spend','Net profit after ads'],datasets:[{label:Y+' YTD',data:[b.net,b.profit,b.spend,b.netProfit],backgroundColor:'#b8862e',borderRadius:3},{label:'Goal, current levers',data:[c.net,c.profit,c.spend,c.netProfit],backgroundColor:'#9db8a8',borderRadius:3},{label:'Goal, your levers',data:[g.net,g.profit,g.spend,g.netProfit],backgroundColor:'#0b6b3a',borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:legendBottom}});
 }
 const DL=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 function renderSettings(){
