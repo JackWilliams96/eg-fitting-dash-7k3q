@@ -1,575 +1,593 @@
 {
- "updated": "2026-10-14",
+ "updated": "2026-10-16",
  "sales": [
   {
-   "id": "mrng6xb85r8sh",
+   "id": "s000",
    "date": "2026-07-16",
    "total": 1229,
    "cogs": 583.2
   },
   {
-   "id": "mrnga0azhc1cj",
+   "id": "s001",
    "date": "2026-07-10",
    "total": 455.2,
    "cogs": 331.92
   },
   {
-   "id": "mrngbghdfuclx",
+   "id": "s002",
    "date": "2026-07-10",
    "total": 2199,
    "cogs": 1345
   },
   {
-   "id": "mrngd8e9ogg3p",
+   "id": "s003",
    "date": "2026-07-07",
    "total": 1150,
    "cogs": 723.6
   },
   {
-   "id": "mrngfyf4f1tu8",
+   "id": "s004",
    "date": "2026-07-06",
    "total": 2600,
    "cogs": 1623.73
   },
   {
-   "id": "mrngioccuxe3p",
+   "id": "s005",
    "date": "2026-07-02",
    "total": 279,
    "cogs": 190.8
   },
   {
-   "id": "mrngk2hdami2h",
+   "id": "s006",
    "date": "2026-07-02",
    "total": 169.48,
    "cogs": 116.08
   },
   {
-   "id": "mrnglb8ap6czp",
+   "id": "s007",
    "date": "2026-06-29",
    "total": 588,
    "cogs": 460.08
   },
   {
-   "id": "mrninm70lpfhb",
+   "id": "s008",
    "date": "2026-06-27",
    "total": 1050,
    "cogs": 675
   },
   {
-   "id": "mrniqnzxyony0",
+   "id": "s009",
    "date": "2026-06-26",
    "total": 646,
    "cogs": 518.4
   },
   {
-   "id": "mrnirmumo7eui",
+   "id": "s010",
    "date": "2026-06-23",
    "total": 189.99,
    "cogs": 115
   },
   {
-   "id": "mrniv83ln29ut",
+   "id": "s011",
    "date": "2026-06-17",
    "total": 1900,
    "cogs": 1140.12
   },
   {
-   "id": "mrnivxjgd6a8i",
+   "id": "s012",
    "date": "2026-06-17",
    "total": 499,
    "cogs": 322.2
   },
   {
-   "id": "mrniwnebpkmbo",
+   "id": "s013",
    "date": "2026-06-17",
    "total": 530,
    "cogs": 280
   },
   {
-   "id": "mrnixmb2un0s0",
+   "id": "s014",
    "date": "2026-06-16",
    "total": 418.5,
    "cogs": 276
   },
   {
-   "id": "mrniygbg663wn",
+   "id": "s015",
    "date": "2026-06-16",
    "total": 999,
    "cogs": 581.94
   },
   {
-   "id": "mrniz2fgg3wdo",
+   "id": "s016",
    "date": "2026-06-16",
    "total": 499,
    "cogs": 322.2
   },
   {
-   "id": "mrnj18ht39kvm",
+   "id": "s017",
    "date": "2026-06-12",
    "total": 989.1,
    "cogs": 783
   },
   {
-   "id": "mrnjcz74vlxz4",
+   "id": "s018",
    "date": "2026-06-12",
    "total": 399,
    "cogs": 322.2
   },
   {
-   "id": "mrnjdxefgw6gb",
+   "id": "s019",
    "date": "2026-06-08",
    "total": 476.1,
    "cogs": 319.49
   },
   {
-   "id": "mrnjecus9x1q7",
+   "id": "s020",
    "date": "2026-06-08",
    "total": 494.1,
    "cogs": 322.2
   },
   {
-   "id": "mrnjevjavwfzl",
+   "id": "s021",
    "date": "2026-06-05",
    "total": 494.1,
    "cogs": 320.25
   },
   {
-   "id": "mrnjffmq5277m",
+   "id": "s022",
    "date": "2026-06-03",
    "total": 105,
    "cogs": 65.57
   },
   {
-   "id": "mrnjgpjr11isl",
+   "id": "s023",
    "date": "2026-06-03",
    "total": 999,
    "cogs": 581.94
   },
   {
-   "id": "mrnjiqyt622mi",
+   "id": "s024",
    "date": "2026-06-03",
    "total": 1023.3,
    "cogs": 663.3
   },
   {
-   "id": "mrx9wk4206evz",
+   "id": "s025",
    "date": "2026-07-22",
    "total": 168.35,
    "cogs": 92.3
   },
   {
-   "id": "mrxa067m0aamg",
+   "id": "s026",
    "date": "2026-07-22",
    "total": 299,
    "cogs": 183.6
   },
   {
-   "id": "mrxafnwf5yh09",
+   "id": "s027",
    "date": "2026-07-22",
    "total": 714,
    "cogs": 480
   },
   {
-   "id": "mrxai1bsrauxn",
+   "id": "s028",
    "date": "2026-07-21",
    "total": 223.95,
    "cogs": 153.9
   },
   {
-   "id": "mrxaps831naxz",
+   "id": "s029",
    "date": "2026-07-22",
    "total": 515,
    "cogs": 322.2
   },
   {
-   "id": "msczyon4abinl",
+   "id": "s030",
    "date": "2026-07-10",
    "total": 499,
    "cogs": 322.2
   },
   {
-   "id": "msd7j7uk2230c",
+   "id": "s031",
    "date": "2026-03-25",
    "total": 1905.7,
    "cogs": 1173.82
   },
   {
-   "id": "msd7k03wdku4y",
+   "id": "s032",
    "date": "2026-03-30",
    "total": 174.99,
    "cogs": 115
   },
   {
-   "id": "msd7lco9awwpj",
+   "id": "s033",
    "date": "2026-04-09",
    "total": 1373.4,
    "cogs": 890.16
   },
   {
-   "id": "msd7o3tgrm1jc",
+   "id": "s034",
    "date": "2026-04-10",
    "total": 762.3,
    "cogs": 430.5
   },
   {
-   "id": "msd7q2s4z0s40",
+   "id": "s035",
    "date": "2026-04-10",
    "total": 1679.4,
    "cogs": 923.15
   },
   {
-   "id": "msd7roos8286t",
+   "id": "s036",
    "date": "2026-04-13",
    "total": 900,
    "cogs": 608.38
   },
   {
-   "id": "msd7sr6ihwd24",
+   "id": "s037",
    "date": "2026-04-13",
    "total": 1470.1,
    "cogs": 955.5
   },
   {
-   "id": "msd7tzcn70zi0",
+   "id": "s038",
    "date": "2026-04-15",
    "total": 298,
    "cogs": 190.55
   },
   {
-   "id": "msd7xm71fub6d",
+   "id": "s039",
    "date": "2026-04-15",
    "total": 2119.5,
    "cogs": 1339.88
   },
   {
-   "id": "msd7zkash6u4i",
+   "id": "s040",
    "date": "2026-04-17",
    "total": 888.3,
    "cogs": 537.66
   },
   {
-   "id": "msd80c9iguuod",
+   "id": "s041",
    "date": "2026-04-17",
    "total": 649,
    "cogs": 483.3
   },
   {
-   "id": "msd816uuwqbk7",
+   "id": "s042",
    "date": "2026-04-18",
    "total": 1252.8,
    "cogs": 752.55
   },
   {
-   "id": "msd81uguiu5hn",
+   "id": "s043",
    "date": "2026-04-18",
    "total": 189.99,
    "cogs": 67.5
   },
   {
-   "id": "msd86vrv3odjs",
+   "id": "s044",
    "date": "2026-04-22",
    "total": 235.95,
    "cogs": 182.9
   },
   {
-   "id": "msd8d7c9uzub8",
+   "id": "s045",
    "date": "2026-04-22",
    "total": 594.1,
    "cogs": 337.16
   },
   {
-   "id": "msiq5jmxvamv6",
+   "id": "s046",
    "date": "2026-08-03",
    "total": 800,
    "cogs": 522
   },
   {
-   "id": "msiuvp9nc5bwn",
+   "id": "s047",
    "date": "2026-08-06",
    "total": 206.95,
    "cogs": 105.8
   },
   {
-   "id": "msn7uspo7ye12",
+   "id": "s048",
    "date": "2026-08-10",
    "total": 284.05,
    "cogs": 170.2
   },
   {
-   "id": "msn839nyhkorf",
+   "id": "s049",
    "date": "2026-08-04",
    "total": 400,
    "cogs": 211.41
   },
   {
-   "id": "msrmdvns2iz3m",
+   "id": "s050",
    "date": "2026-08-10",
    "total": 178,
    "cogs": 80
   },
   {
-   "id": "msrmggnmckgzf",
+   "id": "s051",
    "date": "2026-08-13",
    "total": 315.86,
    "cogs": 211.84
   },
   {
-   "id": "mtjttsg4xkvk3",
+   "id": "s052",
    "date": "2026-09-01",
    "total": 1079,
    "cogs": 626.4
   },
   {
-   "id": "mtjtucrf8s6ag",
+   "id": "s053",
    "date": "2026-09-01",
    "total": 285,
    "cogs": 183.6
   },
   {
-   "id": "mtjtuttqyd40z",
+   "id": "s054",
    "date": "2026-09-01",
    "total": 249,
    "cogs": 144
   },
   {
-   "id": "mtjty736v1g38",
+   "id": "s055",
    "date": "2026-08-28",
    "total": 543,
    "cogs": 335.8
   },
   {
-   "id": "mtju0o5t140rq",
+   "id": "s056",
    "date": "2026-08-26",
    "total": 1489,
    "cogs": 839.26
   },
   {
-   "id": "mtju2v162kiqi",
+   "id": "s057",
    "date": "2026-08-25",
    "total": 999,
    "cogs": 541.13
   },
   {
-   "id": "mtju4lw99aul7",
+   "id": "s058",
    "date": "2026-08-24",
    "total": 107.1,
    "cogs": 62.4
   },
   {
-   "id": "mtju8r4sk8tgr",
+   "id": "s059",
    "date": "2026-08-20",
    "total": 1007.1,
    "cogs": 675
   },
   {
-   "id": "mtjubpkjc0m2r",
+   "id": "s060",
    "date": "2026-08-21",
    "total": 838,
    "cogs": 466.11
   },
   {
-   "id": "mtloymqnl3m96",
+   "id": "s061",
    "date": "2026-09-03",
    "total": 1178,
    "cogs": 787.5
   },
   {
-   "id": "mtr51ungarylo",
+   "id": "s062",
    "date": "2026-09-04",
    "total": 208.05,
    "cogs": 124.46
   },
   {
-   "id": "mtr52ees8cosu",
+   "id": "s063",
    "date": "2026-09-04",
    "total": 1234.05,
    "cogs": 730.8
   },
   {
-   "id": "mtr5kq16nbnh4",
+   "id": "s064",
    "date": "2026-09-07",
    "total": 165,
    "cogs": 101.2
   },
   {
-   "id": "mtsoap48ai0nk",
+   "id": "s065",
    "date": "2026-09-07",
    "total": 999,
    "cogs": 582.75
   },
   {
-   "id": "mtsqmbnuqmv63",
+   "id": "s066",
    "date": "2026-09-08",
    "total": 749,
    "cogs": 413.25
   },
   {
-   "id": "mttu8kyq2im0j",
+   "id": "s067",
    "date": "2026-09-08",
    "total": 999,
    "cogs": 737.1
   },
   {
-   "id": "mttzjnim5cwtz",
+   "id": "s068",
    "date": "2026-09-09",
    "total": 379,
    "cogs": 278.4
   },
   {
-   "id": "mtvcyfbe3b1wi",
+   "id": "s069",
    "date": "2026-09-10",
    "total": 1321.2,
    "cogs": 900
   },
   {
-   "id": "mtvj2wm48v6pw",
+   "id": "s070",
    "date": "2026-09-02",
    "total": 89.99,
    "cogs": 76.66
   },
   {
-   "id": "mtvj3aej5vpjn",
+   "id": "s071",
    "date": "2026-09-02",
    "total": 299,
    "cogs": 175.5
   },
   {
-   "id": "mtvj6gttkxqb5",
+   "id": "s072",
    "date": "2026-09-02",
    "total": 911,
    "cogs": 470.42
   },
   {
-   "id": "mtvn3mlmzh4e0",
+   "id": "s073",
    "date": "2026-09-10",
    "total": 380,
    "cogs": 250.4
   },
   {
-   "id": "mtx05u9k0glm1",
+   "id": "s074",
    "date": "2026-09-11",
    "total": 429,
    "cogs": 238.21
   },
   {
-   "id": "mtx0twu1wxosx",
+   "id": "s075",
    "date": "2026-09-11",
    "total": 287.1,
    "cogs": 190.8
   },
   {
-   "id": "mtx0wizsrkdfv",
+   "id": "s076",
    "date": "2026-09-11",
    "total": 242.1,
    "cogs": 157.5
   },
   {
-   "id": "mtx14xkb1froc",
+   "id": "s077",
    "date": "2026-09-11",
    "total": 899.1,
    "cogs": 578.55
   },
   {
-   "id": "mv13auaf7w1qf",
+   "id": "s078",
    "date": "2026-10-09",
    "total": 599,
    "cogs": 365.2
   },
   {
-   "id": "mv13dmko98ou3",
+   "id": "s079",
    "date": "2026-10-09",
    "total": 999,
    "cogs": 504
   },
   {
-   "id": "mv13ebrxt7m1x",
+   "id": "s080",
    "date": "2026-10-09",
    "total": 420,
    "cogs": 241.5
   },
   {
-   "id": "mv5ebgvq5nti8",
+   "id": "s081",
    "date": "2026-10-12",
    "total": 999,
    "cogs": 626.4
   },
   {
-   "id": "mv5ek73ockol0",
+   "id": "s082",
    "date": "2026-05-28",
    "total": 1100,
    "cogs": 676.54
   },
   {
-   "id": "mv5febu5vucyk",
+   "id": "s083",
    "date": "2026-05-27",
    "total": 980.1,
    "cogs": 626.4
   },
   {
-   "id": "mv5ffudw5p37z",
+   "id": "s084",
    "date": "2026-05-26",
    "total": 574.2,
    "cogs": 361.8
   },
   {
-   "id": "mv5fgsearf7tt",
+   "id": "s085",
    "date": "2026-05-26",
    "total": 109,
    "cogs": 62.4
   },
   {
-   "id": "mv5fi97ioak8k",
+   "id": "s086",
    "date": "2026-05-26",
    "total": 962.1,
    "cogs": 541.13
   },
   {
-   "id": "mv5fntdrqbttz",
+   "id": "s087",
    "date": "2026-05-22",
    "total": 915.1,
    "cogs": 626.4
   },
   {
-   "id": "mv5fol5k1qo6b",
+   "id": "s088",
    "date": "2026-05-20",
    "total": 234.99,
    "cogs": 160
   },
   {
-   "id": "mv5fq8ydqbzkz",
+   "id": "s089",
    "date": "2026-05-20",
    "total": 915,
    "cogs": 498.4
   },
   {
-   "id": "mv5fsqq9x8mq4",
+   "id": "s090",
    "date": "2026-05-15",
    "total": 539.1,
    "cogs": 360
   },
   {
-   "id": "mv5fy0i630z4i",
+   "id": "s091",
    "date": "2026-05-07",
    "total": 1679.1,
    "cogs": 978.75
   },
   {
-   "id": "mv5g09n95jhos",
+   "id": "s092",
    "date": "2026-05-01",
    "total": 1000,
    "cogs": 583.2
   },
   {
-   "id": "mv86s8dk4alkl",
+   "id": "s093",
    "date": "2026-10-14",
    "total": 1295.1,
    "cogs": 756.9
   },
   {
-   "id": "mv86z3iq71fq8",
+   "id": "s094",
    "date": "2026-10-14",
    "total": 415.71,
-   "cogs": 300.15
+   "cogs": 200.1
+  },
+  {
+   "id": "s095",
+   "date": "2026-10-13",
+   "total": 20,
+   "cogs": 0.01
+  },
+  {
+   "id": "s096",
+   "date": "2026-10-15",
+   "total": 1550,
+   "cogs": 879.69
+  },
+  {
+   "id": "s097",
+   "date": "2026-10-15",
+   "total": 305.97,
+   "cogs": 190.8
   }
  ],
  "months": {
